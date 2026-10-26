@@ -1,8 +1,13 @@
-"""Зведені показники кампанії (блок Б5): витрати, дохід, окупність, показники етапів."""
+"""Зведені показники кампанії (блок Б5): витрати, дохід, окупність, статистика етапів."""
+from collections import Counter
 from datetime import date
 
 from . import calc, refs
 from .db import query
+
+# Сума позиції кошторису: фактична, якщо вже внесена, інакше планова
+COST_SQL = "COALESCE(actual, planned)"
+
 
 
 def event_phase(event, today=None):
@@ -15,12 +20,25 @@ def event_phase(event, today=None):
     return "ongoing"
 
 
+def cost_totals(event_id):
+    """Витрати на подію: план, факт і сума для розрахунку окупності (ФВ-03)."""
+    row = query(
+        f"SELECT COALESCE(SUM(planned), 0) AS planned, COALESCE(SUM(actual), 0) AS actual, "
+        f"COUNT(actual) AS with_actual, COUNT(*) AS items, COALESCE(SUM({COST_SQL}), 0) AS total "
+        "FROM cost_items WHERE event_id = ?", (event_id,), one=True)
+    return dict(row)
 
 
 def total_cost(event_id):
-    """Загальні витрати на подію, ФВ-03."""
-    row = query("SELECT COALESCE(SUM(amount), 0) AS s FROM cost_items WHERE event_id = ?", (event_id,), one=True)
-    return row["s"]
+    return cost_totals(event_id)["total"]
+
+
+def costs_by_category(event_id):
+    return query(
+        "SELECT cc.name, SUM(ci.planned) AS planned, SUM(ci.actual) AS actual, "
+        "SUM(COALESCE(ci.actual, ci.planned)) AS total "
+        "FROM cost_items ci JOIN cost_categories cc ON cc.id = ci.category_id WHERE ci.event_id = ? "
+        "GROUP BY cc.name ORDER BY total DESC", (event_id,))
 
 
 def revenue_split(event_id):
@@ -40,12 +58,15 @@ def revenue_split(event_id):
 
 def roi_summary(event_id):
     """Окупність події за формулою (3.1) з текстовим висновком, ФВ-17."""
-    cost = total_cost(event_id)
+    costs = cost_totals(event_id)
     rev = revenue_split(event_id)
-    value = calc.roi(rev["new"], rev["accelerated"], cost)
+    value = calc.roi(rev["new"], rev["accelerated"], costs["total"])
     verdict, tone = calc.roi_verdict(value)
     return {
-        "cost": cost,
+        "cost": costs["total"],
+        "cost_planned": costs["planned"],
+        "cost_actual": costs["actual"],
+        "cost_is_final": costs["items"] > 0 and costs["with_actual"] == costs["items"],
         "revenue_new": rev["new"],
         "revenue_accelerated": rev["accelerated"],
         "revenue": rev["new"] + rev["accelerated"],
@@ -91,22 +112,33 @@ def target_counts(event_id):
 
 
 def dashboard(event, today=None):
-    """Показники трьох етапів кампанії для аналітичної дошки, ФВ-18."""
+    """Показники трьох етапів кампанії для вікна статистики, ФВ-18."""
     eid = event["id"]
     tc = target_counts(eid)
     total_targets = sum(tc.values())
     contacted = total_targets - tc["candidate"]
-    responded = tc["replied"] + tc["confirmed"] + tc["meeting"] + tc["declined"]
+    responded = tc["replied"] + tc["meeting"] + tc["met"] + tc["not_interested"]
+    meetings_set = tc["meeting"] + tc["met"]
+    targets = query("SELECT channel, priority, status FROM targets WHERE event_id = ?", (eid,))
+    target_channels = Counter(t["channel"] for t in targets if t["status"] != "candidate")
+    replied_channels = Counter(t["channel"] for t in targets
+                               if t["status"] in ("replied", "meeting", "met", "not_interested"))
 
-    leads = query("SELECT target_id, icp_fit, intent, status FROM leads WHERE event_id = ?", (eid,))
-    planned = sum(1 for l in leads if l["target_id"])
-    qualified = sum(1 for l in leads if calc.is_qualified(l["icp_fit"], l["status"]))
-    by_intent = {i: sum(1 for l in leads if l["intent"] == i) for i in (3, 2, 1)}
+    leads = query("SELECT target_id, met, icp_fit, intent, status, channel, captured_at FROM leads WHERE event_id = ?",
+                  (eid,))
+    met_leads = [l for l in leads if l["met"]]
+    planned = sum(1 for l in met_leads if l["target_id"])
+    qualified = sum(1 for l in met_leads if calc.is_qualified(l["icp_fit"], l["status"]))
+    by_intent = {i: sum(1 for l in met_leads if l["intent"] == i) for i in (3, 2, 1)}
     by_status = {k: sum(1 for l in leads if l["status"] == k) for k in refs.LEAD_STATUSES}
+    by_day = Counter(l["captured_at"][:10] for l in met_leads)
+    by_icp = {i: sum(1 for l in met_leads if l["icp_fit"] == i) for i in (3, 2, 1)}
 
     fu = query(
         "SELECT COUNT(*) AS n, COUNT(DISTINCT f.lead_id) AS leads FROM followups f "
         "JOIN leads l ON l.id = f.lead_id WHERE l.event_id = ?", (eid,), one=True)
+    fu_channels = Counter(r["channel"] for r in query(
+        "SELECT f.channel FROM followups f JOIN leads l ON l.id = f.lead_id WHERE l.event_id = ?", (eid,)))
     today_iso = (today or date.today()).isoformat()
     overdue = query(
         "SELECT COUNT(*) AS n FROM leads WHERE event_id = ? AND status IN ('new','in_progress') "
@@ -116,30 +148,36 @@ def dashboard(event, today=None):
         "WHERE l.event_id = ? AND d.stage = 'open'", (eid,), one=True)
 
     roi = roi_summary(eid)
-    meetings_set = tc["meeting"]
-    met = query(
-        "SELECT COUNT(DISTINCT l.target_id) AS n FROM leads l JOIN targets t ON t.id = l.target_id "
-        "WHERE l.event_id = ? AND t.status = 'meeting'", (eid,), one=True)["n"]
     return {
         "targets": tc,
         "targets_total": total_targets,
         "contacted": contacted,
         "responded": responded,
         "reply_rate": (responded / contacted) if contacted else None,
-        "leads_total": len(leads),
+        "target_channels": target_channels,
+        "replied_channels": replied_channels,
+        "priorities": Counter(t["priority"] for t in targets),
+        "leads_total": len(met_leads),
+        "unmet_in_work": len(leads) - len(met_leads),
         "planned": planned,
-        "spontaneous": len(leads) - planned,
-        "planned_share": (planned / len(leads)) if leads else None,
-        "meetings_held": met,
+        "spontaneous": len(met_leads) - planned,
+        "planned_share": (planned / len(met_leads)) if met_leads else None,
+        "meetings_held": tc["met"],
         "meetings_set": meetings_set,
+        "meeting_rate": (tc["met"] / meetings_set) if meetings_set else None,
         "qualified": qualified,
+        "qualified_share": (qualified / len(met_leads)) if met_leads else None,
         "by_intent": by_intent,
+        "by_icp": by_icp,
         "by_status": by_status,
+        "by_day": sorted(by_day.items()),
         "followups": fu["n"],
         "followed_leads": fu["leads"],
+        "followup_channels": fu_channels,
         "overdue": overdue,
         "open_deals": open_deals["n"],
         "pipeline": open_deals["s"],
+        "cost_per_lead": (roi["cost"] / len(met_leads)) if met_leads and roi["cost"] else None,
         "cost_per_qualified": (roi["cost"] / qualified) if qualified and roi["cost"] else None,
         "forecast": calc.forecast(meetings_set, event["close_rate"], event["avg_deal"], roi["cost"]),
         "roi": roi,
@@ -151,13 +189,16 @@ def event_cards(today=None):
     events = query("SELECT * FROM events ORDER BY start_date DESC")
     cards = []
     for e in events:
-        leads = query("SELECT COUNT(*) AS n FROM leads WHERE event_id = ?", (e["id"],), one=True)["n"]
+        leads = query("SELECT COUNT(*) AS n FROM leads WHERE event_id = ? AND met = 1", (e["id"],), one=True)["n"]
         targets = query("SELECT COUNT(*) AS n FROM targets WHERE event_id = ?", (e["id"],), one=True)["n"]
+        meetings = query("SELECT COUNT(*) AS n FROM targets WHERE event_id = ? AND status IN ('meeting', 'met')",
+                         (e["id"],), one=True)["n"]
         cards.append({
             "event": e,
             "phase": event_phase(e, today),
             "leads": leads,
             "targets": targets,
+            "meetings": meetings,
             "roi": roi_summary(e["id"]),
             "score": score_summary(e["id"]),
         })

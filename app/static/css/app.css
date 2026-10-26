@@ -132,3 +132,71 @@ body { -webkit-tap-highlight-color: transparent; }
   main { padding: 0 !important; }
   a { color: inherit; text-decoration: none; }
 }
+
+/* ---- Канали, пріоритети ---- */
+.channel { display: inline-flex; align-items: center; gap: .25rem; font-size: .85rem; color: #5c6773; text-decoration: none; white-space: nowrap; }
+.channel-linkedin { color: #0a66c2; }
+.channel-email { color: #2b5c9a; }
+.channel-messenger { color: #1fa855; }
+.channel-event_app { color: #7b4bc4; }
+a.channel:hover { text-decoration: underline; }
+.prio { display: inline-grid; place-items: center; min-width: 2rem; height: 1.35rem; border-radius: .35rem; font-size: .72rem; font-weight: 700; flex-shrink: 0; margin-top: .1rem; }
+.prio-1 { background: #fde2e2; color: #b42318; }
+.prio-2 { background: #fff1d6; color: #92600a; }
+.prio-3 { background: #e9edf2; color: #51606f; }
+.dot { width: .55rem; height: .55rem; border-radius: 50%; display: inline-block; background: #cfd8e3; }
+.dot-info { background: #0dcaf0; } .dot-primary { background: #2b5c9a; } .dot-warning { background: #ffc107; }
+.dot-success { background: #198754; } .dot-dark { background: #343a40; } .dot-light { background: #ced4da; } .dot-secondary { background: #8a96a3; }
+.status-warning { background-color: #fff7e0; }
+.intent-none { background: #f1f1f3; color: #6c757d; font-weight: 500; }
+.channel-buttons { display: flex; flex-wrap: wrap; gap: .35rem; }
+
+/* ---- Витрати ---- */
+.cost-rows { padding: 0 1rem; }
+.cost-row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; padding: .75rem 0; border-bottom: 1px solid #eef1f5; align-items: center; }
+.cost-row > :first-child { grid-column: 1 / -1; }
+.cost-cell { display: flex; flex-direction: column; gap: .15rem; }
+.cost-head { font-size: .78rem; color: var(--bs-secondary-color); text-transform: uppercase; letter-spacing: .03em; }
+.cost-total { font-weight: 600; border-bottom: 0; }
+.cost-total > :first-child { grid-column: auto; }
+.is-over { border-color: var(--bs-danger); color: var(--bs-danger); }
+@media (min-width: 768px) {
+  .cost-row { grid-template-columns: 1fr 9rem 9rem 5.5rem; }
+  .cost-row > :first-child { grid-column: auto; }
+}
+
+/* ---- Графіки і показники ---- */
+.chart-box { position: relative; height: 280px; }
+.chart-sm { height: 230px; }
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; }
+.kpi { display: flex; gap: .75rem; align-items: center; background: #fff; border: 1px solid #e3e8ef; border-radius: .9rem; padding: .9rem 1rem; }
+.kpi > i { font-size: 1.35rem; width: 2.6rem; height: 2.6rem; border-radius: .75rem; display: grid; place-items: center; background: #eef3fa; color: var(--bs-primary); flex-shrink: 0; }
+.kpi-v { font-size: 1.35rem; font-weight: 700; line-height: 1.15; white-space: nowrap; }
+.kpi-v small { font-size: .8rem; font-weight: 500; color: var(--bs-secondary-color); }
+.kpi-l { font-size: .78rem; color: var(--bs-secondary-color); line-height: 1.25; }
+.kpi-roi.kpi-success > i { background: #e3f4ea; color: #198754; }
+.kpi-roi.kpi-danger > i { background: #fde6e6; color: #d64545; }
+.kpi-roi.kpi-warning > i { background: #fff3cd; color: #b07a00; }
+.stage-title { font-size: 1rem; font-weight: 600; margin: .25rem 0 .75rem; display: flex; align-items: center; }
+
+/* ---- Календар зустрічей ---- */
+.cal { display: grid; grid-template-columns: 4.5rem repeat(var(--days), minmax(0, 1fr)); }
+.cal > div { border-bottom: 1px solid #eef1f5; border-right: 1px solid #eef1f5; }
+.cal-corner, .cal-day { background: #f7f9fb; font-weight: 600; font-size: .85rem; padding: .6rem .5rem; text-align: center; position: sticky; top: 56px; z-index: 2; }
+.cal-hour { font-size: .78rem; color: var(--bs-secondary-color); padding: .4rem .5rem; text-align: right; }
+.cal-slot { min-height: 3.2rem; padding: .25rem; display: grid; gap: .25rem; align-content: start; }
+.cal-slot.busy { background: #fffaf0; }
+.meet { display: block; text-decoration: none; color: inherit; background: #fff3d6; border-left: 3px solid #e0a526; border-radius: .4rem; padding: .3rem .45rem; font-size: .78rem; line-height: 1.25; }
+.meet:hover { background: #ffeab8; color: inherit; }
+.meet-met { background: #e3f4ea; border-left-color: #198754; }
+.meet-time { font-weight: 700; margin-right: .25rem; }
+.meet-name { font-weight: 600; }
+.meet-name i { color: #e0a526; font-size: .7rem; }
+.meet-co { display: block; color: #6c757d; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.meet-done { display: block; color: #198754; font-weight: 600; }
+.cal-hour-m { font-size: .8rem; color: var(--bs-secondary-color); width: 2.8rem; flex-shrink: 0; padding-top: .2rem; }
+.cal-free { padding-top: .35rem; padding-bottom: .35rem; }
+@media (max-width: 767.98px) {
+  .crm-table .ch-label { display: none; }
+  .crm-table td { padding-left: .4rem; padding-right: .4rem; }
+}

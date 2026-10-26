@@ -38,14 +38,14 @@
       <div class="d-flex flex-wrap justify-content-between gap-2">
         <div class="min-w-0 flex-grow-1">
           <a class="fw-semibold text-decoration-none" href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ l.full_name }}</a>
-          <span class="text-body-secondary">{{ ('· ' ~ l.company) if l.company }}</span>
+          <span class="text-body-secondary">{{ ('· ' ~ l.company) if l.company }}</span> {{ m.channel(l.channel, l.linkedin_url if l.channel == 'linkedin' else None) }}
           <div class="small text-body-secondary text-truncate">
             {{ l.event_name }}{% if l.next_step %} · <b class="text-body">{{ l.next_step }}</b>{% endif %}{% if l.owner_name and not mine %} · {{ l.owner_name }}{% endif %}
           </div>
           {% if l.details %}<div class="small mt-1 text-truncate-2">{{ l.details }}</div>{% endif %}
         </div>
         <div class="text-end">
-          {{ m.intent_badge(l.intent) }}
+          {{ m.intent_badge(l.intent if l.met else none) }}
           <div class="small mt-1 {{ 'text-danger fw-semibold' if key == 'overdue' else 'text-body-secondary' }}">{{ l.due_date|d }}</div>
         </div>
       </div>
@@ -54,7 +54,7 @@
       <div class="collapse" id="fu{{ l.id }}">
         <form method="post" action="{{ url_for('leads.add_followup', lead_id=l.id) }}" class="row g-2 mt-1">
           {{ m.csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}">
-          <div class="col-6 col-md-3"><select class="form-select form-select-sm" name="channel" aria-label="Канал">{% for k, v in refs.FOLLOWUP_CHANNELS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div class="col-6 col-md-3"><select class="form-select form-select-sm" name="channel" aria-label="Канал">{% for k, v in refs.CHANNELS.items() %}<option value="{{ k }}" {{ 'selected' if l.channel == k }}>{{ v[0] }}</option>{% endfor %}</select></div>
           <div class="col-6 col-md-3"><select class="form-select form-select-sm" name="result" aria-label="Результат">{% for k, v in refs.FOLLOWUP_RESULTS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
           <div class="col-12 col-md-4"><input class="form-control form-control-sm" name="note" placeholder="Нотатка"></div>
           <div class="col-12 col-md-2"><button class="btn btn-sm btn-primary w-100">Зберегти</button></div>

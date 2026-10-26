@@ -30,6 +30,9 @@
         {% if can('queue') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'leads.queue' %}active{% endif %}" href="{{ url_for('leads.queue') }}"><i class="bi bi-list-check"></i> Черга дій</a></li>
         {% endif %}
+        {% if can('analytics') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'analytics.overview' %}active{% endif %}" href="{{ url_for('analytics.overview') }}"><i class="bi bi-bar-chart-line"></i> Статистика</a></li>
+        {% endif %}
         {% if can('lead_capture') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint in ('events.capture_choose', 'leads.capture') %}active{% endif %}" href="{{ url_for('events.capture_choose') }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a></li>
         {% endif %}

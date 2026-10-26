@@ -4,12 +4,11 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-12 col-lg-8">
-    <a href="{{ url_for('targets.index', event_id=event.id) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Цільовий список · {{ event.name }}</a>
-    <h1 class="h3 mt-1 mb-3">{{ target.full_name }} {{ m.badge(refs.TARGET_STATUSES[target.status]) }}</h1>
+    <a href="{{ url_for('targets.index', event_id=event.id) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Контакти до події · {{ event.name }}</a>
+    <h1 class="h3 mt-1 mb-3 d-flex flex-wrap align-items-center gap-2">{{ m.priority(target.priority) }} {{ target.full_name }} {{ m.badge(refs.TARGET_STATUSES[target.status]) }}</h1>
     {% if leads %}
     <div class="alert alert-success small">
-      <i class="bi bi-chat-square-text"></i> Розмова на події відбулася:
-      {% for l in leads %}<a href="{{ url_for('leads.detail', lead_id=l.id) }}">лід від {{ l.captured_at|dt }}</a>{{ ', ' if not loop.last }}{% endfor %}
+      {% for l in leads %}<i class="bi bi-chat-square-text"></i> <a href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ 'Розмова на події ' ~ (l.captured_at|dt) if l.met else 'Узято в роботу після події' }}</a>{{ ', ' if not loop.last }}{% endfor %}
     </div>
     {% endif %}
     <form method="post" class="card card-body">
@@ -18,13 +17,21 @@
         <div class="col-12 col-md-6"><label class="form-label">Ім'я та прізвище *</label><input class="form-control" name="full_name" value="{{ target.full_name }}" required></div>
         <div class="col-12 col-md-6"><label class="form-label">Компанія *</label><input class="form-control" name="company" value="{{ target.company }}" required></div>
         <div class="col-12 col-md-6"><label class="form-label">Посада</label><input class="form-control" name="position" value="{{ target.position or '' }}"></div>
-        <div class="col-12 col-md-6"><label class="form-label">Джерело</label>
-          <select class="form-select" name="source">{% for k, v in refs.TARGET_SOURCES.items() %}<option value="{{ k }}" {{ 'selected' if target.source == k }}>{{ v }}</option>{% endfor %}</select></div>
+        <div class="col-12 col-md-6"><label class="form-label">LinkedIn</label><input class="form-control" type="url" name="linkedin_url" value="{{ target.linkedin_url or '' }}" placeholder="https://www.linkedin.com/in/..."></div>
         <div class="col-12 col-md-6"><label class="form-label">E-mail</label><input class="form-control" type="email" name="email" value="{{ target.email or '' }}"></div>
-        <div class="col-12 col-md-6"><label class="form-label">Телефон</label><input class="form-control" type="tel" name="phone" value="{{ target.phone or '' }}"></div>
+        <div class="col-12 col-md-6"><label class="form-label">Телефон / WhatsApp</label><input class="form-control" type="tel" name="phone" value="{{ target.phone or '' }}"></div>
+        <div class="col-12 col-md-4"><label class="form-label">Канал зв'язку</label>
+          <select class="form-select" name="channel">{% for k, (label, icon) in refs.CHANNELS.items() %}<option value="{{ k }}" {{ 'selected' if target.channel == k }}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-12 col-md-4"><label class="form-label">Пріоритет</label>
+          <select class="form-select" name="priority">{% for p, (code, label, tone) in refs.PRIORITIES.items() %}<option value="{{ p }}" {{ 'selected' if target.priority == p }}>{{ code }} — {{ label }}</option>{% endfor %}</select></div>
+        <div class="col-12 col-md-4"><label class="form-label">Звідки контакт</label>
+          <select class="form-select" name="source">{% for k, v in refs.TARGET_SOURCES.items() %}<option value="{{ k }}" {{ 'selected' if target.source == k }}>{{ v }}</option>{% endfor %}</select></div>
         <div class="col-12 col-md-6"><label class="form-label">Відповідальний</label>
           <select class="form-select" name="owner_id"><option value="">—</option>{% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if target.owner_id == u.id }}>{{ u.full_name }}</option>{% endfor %}</select></div>
         <div class="col-12 col-md-6"><label class="form-label">Перше повідомлення</label><input class="form-control" value="{{ target.contacted_at|d }}" disabled></div>
+        <div class="col-12"><hr class="my-1"><div class="fw-semibold"><i class="bi bi-star-fill text-warning"></i> Зустріч на події</div></div>
+        <div class="col-12 col-md-6"><label class="form-label">Дата і час</label><input class="form-control" type="datetime-local" name="meeting_at" value="{{ target.meeting_at or '' }}" min="{{ event.start_date }}T07:00" max="{{ event.end_date }}T22:00"></div>
+        <div class="col-12 col-md-6"><label class="form-label">Місце</label><input class="form-control" name="meeting_place" value="{{ target.meeting_place or '' }}" placeholder="Наприклад, стенд B12 або кав'ярня біля зали 2"></div>
         <div class="col-12"><label class="form-label">Нотатка</label><textarea class="form-control" name="note" rows="3">{{ target.note or '' }}</textarea></div>
       </div>
       <div class="d-flex flex-wrap gap-2 mt-3">

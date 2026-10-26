@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m with context %}
-{% block title %}Цільовий список · {{ event.name }}{% endblock %}
+{% block title %}Контакти до події · {{ event.name }}{% endblock %}
 {% block content %}
 {{ m.event_header(event, phase, tab) }}
 {% set total = counts.values()|sum %}
@@ -8,7 +8,7 @@
 <div class="status-chips mb-3">
   <a class="chip {{ 'active' if not status }}" href="{{ url_for('targets.index', event_id=event.id) }}">Усі <b>{{ total }}</b></a>
   {% for key, (label, tone) in refs.TARGET_STATUSES.items() %}
-  <a class="chip chip-{{ tone }} {{ 'active' if status == key }}" href="{{ url_for('targets.index', event_id=event.id, status=key) }}">{{ label }} <b>{{ counts[key] }}</b></a>
+  <a class="chip chip-{{ tone }} {{ 'active' if status == key }}" href="{{ url_for('targets.index', event_id=event.id, status=key) }}"><span class="dot dot-{{ tone }}"></span>{{ label }} <b>{{ counts[key] }}</b></a>
   {% endfor %}
 </div>
 
@@ -16,6 +16,7 @@
 <div class="d-flex flex-wrap gap-2 mb-3">
   <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addTarget"><i class="bi bi-person-plus"></i> Додати контакт</button>
   <button class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#importTargets"><i class="bi bi-upload"></i> Імпорт переліку</button>
+  <a class="btn btn-outline-primary ms-auto" href="{{ url_for('targets.meetings', event_id=event.id) }}"><i class="bi bi-calendar-week"></i> Календар зустрічей</a>
 </div>
 
 <div class="collapse mb-3" id="addTarget">
@@ -25,20 +26,26 @@
       <div class="col-12 col-md-4"><input class="form-control" name="full_name" placeholder="Ім'я та прізвище *" required></div>
       <div class="col-12 col-md-4"><input class="form-control" name="company" placeholder="Компанія *" required></div>
       <div class="col-12 col-md-4"><input class="form-control" name="position" placeholder="Посада"></div>
+      <div class="col-12 col-md-4"><input class="form-control" type="url" name="linkedin_url" placeholder="Посилання на LinkedIn"></div>
       <div class="col-12 col-md-4"><input class="form-control" type="email" name="email" placeholder="E-mail"></div>
-      <div class="col-12 col-md-4"><input class="form-control" type="tel" name="phone" placeholder="Телефон"></div>
+      <div class="col-12 col-md-4"><input class="form-control" type="tel" name="phone" placeholder="Телефон / WhatsApp"></div>
       <div class="col-12 col-md-4">
-        <select class="form-select" name="source" aria-label="Джерело">
-          {% for k, v in refs.TARGET_SOURCES.items() if k != 'import' %}<option value="{{ k }}" {{ 'selected' if k == 'manual' }}>Джерело: {{ v }}</option>{% endfor %}
-        </select>
+        <label class="form-label small mb-1">Канал зв'язку</label>
+        <select class="form-select" name="channel">{% for k, (label, icon) in refs.CHANNELS.items() %}<option value="{{ k }}">{{ label }}</option>{% endfor %}</select>
       </div>
       <div class="col-12 col-md-4">
-        <select class="form-select" name="owner_id" aria-label="Відповідальний">
-          <option value="">Відповідальний: —</option>
-          {% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if current_user.id == u.id }}>{{ u.full_name }}</option>{% endfor %}
-        </select>
+        <label class="form-label small mb-1">Пріоритет</label>
+        <select class="form-select" name="priority">{% for p, (code, label, tone) in refs.PRIORITIES.items() %}<option value="{{ p }}" {{ 'selected' if p == 2 }}>{{ code }} — {{ label }}</option>{% endfor %}</select>
       </div>
-      <div class="col-12 col-md-8"><input class="form-control" name="note" placeholder="Нотатка: чому ця людина важлива"></div>
+      <div class="col-12 col-md-4">
+        <label class="form-label small mb-1">Звідки контакт</label>
+        <select class="form-select" name="source">{% for k, v in refs.TARGET_SOURCES.items() if k != 'import' %}<option value="{{ k }}" {{ 'selected' if k == 'manual' }}>{{ v }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-4">
+        <label class="form-label small mb-1">Відповідальний</label>
+        <select class="form-select" name="owner_id"><option value="">—</option>{% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if current_user.id == u.id }}>{{ u.full_name }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-8"><label class="form-label small mb-1">Нотатка</label><input class="form-control" name="note" placeholder="Чому ця людина важлива"></div>
       <div class="col-12"><button class="btn btn-primary">Додати</button></div>
     </div>
   </form>
@@ -47,8 +54,8 @@
 <div class="collapse mb-3" id="importTargets">
   <form method="post" action="{{ url_for('targets.import_list', event_id=event.id) }}" enctype="multipart/form-data" class="card card-body">
     {{ m.csrf() }}
-    <p class="small text-body-secondary mb-2">Колонки: <b>ім'я; компанія; посада; e-mail або телефон</b>. Можна вставити рядки просто з Excel або завантажити файл CSV. Рядки без імені чи компанії буде пропущено, повтори не додаються.</p>
-    <textarea class="form-control font-monospace small mb-2" name="text" rows="5" placeholder="Олена Коваль;FinPay;CTO;olena@finpay.example"></textarea>
+    <p class="small text-body-secondary mb-2">Колонки: <b>ім'я; компанія; посада; e-mail, телефон або посилання на LinkedIn</b>. Можна вставити рядки просто з Excel або завантажити файл CSV. Рядки без імені чи компанії буде пропущено, повтори не додаються.</p>
+    <textarea class="form-control font-monospace small mb-2" name="text" rows="5" placeholder="Olena Koval;FinPay;CTO;olena@finpay.example"></textarea>
     <div class="row g-2">
       <div class="col-12 col-md-6"><input class="form-control" type="file" name="file" accept=".csv,.txt,text/csv"></div>
       <div class="col-12 col-md-4">
@@ -67,17 +74,20 @@
   {% for t in targets %}
     <li class="list-group-item">
       <div class="d-flex flex-wrap align-items-center gap-2 justify-content-between">
-        <div class="flex-grow-1 min-w-0">
-          <div class="fw-semibold text-truncate">
-            {% if can('targets_edit') %}<a class="text-reset text-decoration-none" href="{{ url_for('targets.edit', target_id=t.id) }}">{{ t.full_name }}</a>{% else %}{{ t.full_name }}{% endif %}
-            {% if t.met %}<span class="badge rounded-pill text-bg-success ms-1" title="Розмова на події відбулася"><i class="bi bi-check2"></i> зустрілися</span>{% endif %}
+        <div class="d-flex gap-2 align-items-start flex-grow-1 min-w-0">
+          {{ m.priority(t.priority) }}
+          <div class="min-w-0">
+            <div class="fw-semibold text-truncate">
+              {% if can('targets_edit') %}<a class="text-reset text-decoration-none" href="{{ url_for('targets.edit', target_id=t.id) }}">{{ t.full_name }}</a>{% else %}{{ t.full_name }}{% endif %}
+              {{ m.channel(t.channel, t.linkedin_url if t.channel == 'linkedin' else (('mailto:' ~ t.email) if t.channel == 'email' and t.email else None)) }}
+            </div>
+            <div class="small text-body-secondary text-truncate">
+              {{ t.company }}{% if t.position %} · {{ t.position }}{% endif %}{% if t.owner_name %} · <i class="bi bi-person"></i> {{ t.owner_name }}{% endif %}
+              {% if t.contacted_at %} · написали {{ t.contacted_at|d(short=true) }}{% endif %}
+            </div>
+            {% if t.meeting_at %}<div class="small mt-1 text-warning-emphasis"><i class="bi bi-star-fill text-warning"></i> {{ t.meeting_at|dt }}{% if t.meeting_place %} · {{ t.meeting_place }}{% endif %}</div>{% endif %}
+            {% if t.note %}<div class="small mt-1">{{ t.note }}</div>{% endif %}
           </div>
-          <div class="small text-body-secondary text-truncate">
-            {{ t.company }}{% if t.position %} · {{ t.position }}{% endif %}
-            · {{ refs.TARGET_SOURCES[t.source] }}{% if t.owner_name %} · <i class="bi bi-person"></i> {{ t.owner_name }}{% endif %}
-            {% if t.contacted_at %} · написали {{ t.contacted_at|d(short=true) }}{% endif %}
-          </div>
-          {% if t.note %}<div class="small mt-1">{{ t.note }}</div>{% endif %}
         </div>
         {% if can('targets_edit') %}
         <form method="post" action="{{ url_for('targets.set_status', target_id=t.id) }}" class="status-form">

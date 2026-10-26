@@ -107,6 +107,13 @@ def _register_helpers(app):
             else f"{value:,.2f}".replace(",", " ").replace(".", ",")
         return f"{text} {sign}"
 
+    @app.template_filter("plain")
+    def format_plain(value):
+        """Число для поля форми: 12000 замість 12000.0."""
+        if value is None:
+            return ""
+        return f"{value:.0f}" if abs(value - round(value)) < 0.005 else f"{value:.2f}"
+
     @app.template_filter("num")
     def format_num(value, digits=2):
         if value is None:

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Статистика{% endblock %}
+{% block content %}
+<div class="mb-3">
+  <h1 class="h3 mb-0">Статистика</h1>
+  <div class="text-body-secondary small">Усі події разом: які поїздки окупилися і де найдешевший кваліфікований лід</div>
+</div>
+
+<div class="kpi-grid mb-3">
+  <div class="kpi"><i class="bi bi-wallet2"></i><div><div class="kpi-v">{{ totals.cost|money }}</div><div class="kpi-l">витрачено на події, що відбулися</div></div></div>
+  <div class="kpi"><i class="bi bi-cash-stack"></i><div><div class="kpi-v">{{ totals.revenue|money }}</div><div class="kpi-l">дохід з укладених угод</div></div></div>
+  <div class="kpi kpi-roi kpi-{{ totals.tone }}"><i class="bi bi-graph-up-arrow"></i><div><div class="kpi-v">{{ totals.roi|num }}</div><div class="kpi-l">загальний ROI · {{ totals.verdict }}</div></div></div>
+  <div class="kpi"><i class="bi bi-people"></i><div><div class="kpi-v">{{ totals.leads }}</div><div class="kpi-l">розмов, з них {{ totals.qualified }} кваліфікованих</div></div></div>
+  <div class="kpi"><i class="bi bi-briefcase"></i><div><div class="kpi-v">{{ totals.deals }}</div><div class="kpi-l">угод укладено</div></div></div>
+  <div class="kpi"><i class="bi bi-hourglass-split"></i><div><div class="kpi-v">{{ totals.pipeline|money }}</div><div class="kpi-l">у відкритих угодах</div></div></div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-7">
+    <div class="card h-100"><div class="card-header fw-semibold">Витрати і дохід за подіями</div>
+      <div class="card-body"><div class="chart-box"><canvas id="evMoney"></canvas></div></div></div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card h-100"><div class="card-header fw-semibold">Окупність (ROI) <span class="fw-normal small text-body-secondary">· норма 3–5</span></div>
+      <div class="card-body"><div class="chart-box"><canvas id="evRoi"></canvas></div></div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead><tr><th>Подія</th><th class="text-end">Оцінка</th><th class="text-end">Витрати</th><th class="text-end">Розмов</th><th class="text-end d-none d-md-table-cell">Кваліф.</th><th class="text-end d-none d-md-table-cell">Ціна кваліф. ліда</th><th class="text-end">Дохід</th><th>ROI</th></tr></thead>
+      <tbody>
+      {% for row in rows %}{% set d = row.dash %}{% set e = row.event %}
+        <tr>
+          <td><a class="fw-semibold text-decoration-none" href="{{ url_for('analytics.dashboard', event_id=e.id) }}">{{ e.name }}</a><div class="small text-body-secondary">{{ e.start_date|d }} · {{ refs.PHASES[row.phase][0]|lower }}</div></td>
+          <td class="text-end text-nowrap">{% if row.score.verdict %}<span class="badge text-bg-{{ row.score.verdict.tone }}">{{ row.score.total }}</span>{% else %}—{% endif %}</td>
+          <td class="text-end text-nowrap">{{ d.roi.cost|money(e.currency) }}</td>
+          <td class="text-end">{{ d.leads_total }}</td>
+          <td class="text-end d-none d-md-table-cell">{{ d.qualified }}</td>
+          <td class="text-end text-nowrap d-none d-md-table-cell">{{ d.cost_per_qualified|money(e.currency) }}</td>
+          <td class="text-end text-nowrap">{{ d.roi.revenue|money(e.currency) }}</td>
+          <td>{% if row.phase == 'planned' %}<span class="text-body-secondary small">ще не відбулася</span>{% else %}<span class="badge text-bg-{{ d.roi.tone }}">{{ d.roi.roi|num }}</span>{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+  {% set fin = finished|reverse|list %}
+  var names = {{ fin|map(attribute='event')|map(attribute='name')|list|tojson }};
+  CB.bars('evMoney', names, [
+    {label: 'Витрати', data: {{ fin|map(attribute='dash')|map(attribute='roi')|map(attribute='cost')|list|tojson }}, color: CB.c.red},
+    {label: 'Дохід', data: {{ fin|map(attribute='dash')|map(attribute='roi')|map(attribute='revenue')|list|tojson }}, color: CB.c.green}
+  ], {money: '$'});
+  var rois = {{ fin|map(attribute='dash')|map(attribute='roi')|map(attribute='roi')|list|tojson }};
+  CB.bars('evRoi', names, [{label: 'ROI', data: rois, color: rois.map(function (v) {
+    return v < 1 ? CB.c.red : v < 3 ? CB.c.amber : v <= 5 ? CB.c.green : CB.c.blue; })}], {horizontal: true});
+</script>
+{% endblock %}

@@ -5,9 +5,20 @@
 {%- endmacro %}
 
 {% macro intent_badge(level) -%}
+  {% if not level %}<span class="intent intent-none" title="Розмови не було">не зустрілися</span>{% else %}
   <span class="intent intent-{{ level }}" title="Зацікавленість: {{ refs.LEVELS[level]|lower }}">
     <i class="bi bi-fire"></i> {{ refs.INTENT_LABELS[level] }}
-  </span>
+  </span>{% endif %}
+{%- endmacro %}
+
+{% macro channel(code, link=None, label=False) -%}
+  {% if code %}{% set c = refs.CHANNELS[code] %}
+  {% if link %}<a href="{{ link }}" target="_blank" rel="noopener" class="channel channel-{{ code }}" title="{{ c[0] }}">{% else %}<span class="channel channel-{{ code }}" title="{{ c[0] }}">{% endif %}<i class="bi bi-{{ c[1] }}"></i>{% if label %} <span class="ch-label">{{ c[0] }}</span>{% endif %}{% if link %}</a>{% else %}</span>{% endif %}
+  {% endif %}
+{%- endmacro %}
+
+{% macro priority(p) -%}
+  {% set pr = refs.PRIORITIES[p] %}<span class="prio prio-{{ p }}" title="{{ pr[1] }}">{{ pr[0] }}</span>
 {%- endmacro %}
 
 {% macro level_dots(value, title) -%}
@@ -34,13 +45,16 @@
     {% endif %}
   </div>
   <ul class="nav nav-underline event-tabs mt-3 flex-nowrap overflow-auto">
-    <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'overview' }}" href="{{ url_for('events.detail', event_id=event.id) }}">Планування</a></li>
-    <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'targets' }}" href="{{ url_for('targets.index', event_id=event.id) }}">Цільовий список</a></li>
-    <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'leads' }}" href="{{ url_for('leads.event_leads', event_id=event.id) }}">Ліди</a></li>
-    {% if can('analytics') %}
-    <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'dashboard' }}" href="{{ url_for('analytics.dashboard', event_id=event.id) }}">Дошка</a></li>
-    <li class="nav-item"><a class="nav-link {{ 'active' if tab == 'report' }}" href="{{ url_for('analytics.report', event_id=event.id) }}">Звіт</a></li>
-    {% endif %}
+    {% for key, endpoint, label, icon, perm in [
+        ('overview', 'events.detail', 'Планування', 'clipboard-check', None),
+        ('costs', 'events.costs', 'Витрати', 'wallet2', None),
+        ('targets', 'targets.index', 'Контакти до події', 'person-lines-fill', None),
+        ('meetings', 'targets.meetings', 'Зустрічі', 'calendar-week', None),
+        ('leads', 'leads.event_leads', 'Ліди', 'people', None),
+        ('dashboard', 'analytics.dashboard', 'Статистика', 'bar-chart', 'analytics'),
+        ('report', 'analytics.report', 'Звіт', 'file-earmark-text', 'analytics')] if not perm or can(perm) %}
+    <li class="nav-item"><a class="nav-link {{ 'active' if tab == key }}" href="{{ url_for(endpoint, event_id=event.id) }}"><i class="bi bi-{{ icon }} d-none d-md-inline"></i> {{ label }}</a></li>
+    {% endfor %}
   </ul>
 </div>
 {% endmacro %}

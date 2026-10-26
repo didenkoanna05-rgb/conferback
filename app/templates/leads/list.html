@@ -4,12 +4,19 @@
 {% block content %}
 {{ m.event_header(event, phase, tab) }}
 
+<div class="status-chips mb-3">
+  {% for key, label, n in [('all', 'Усі', (counts.total or 0) + (missed|length if view == 'all' else 0)), ('met', 'Говорили на події', counts.met or 0), ('unmet', 'Не зустрілися, у роботі', counts.unmet or 0), ('missed', 'Не зустрілися, можна написати', none)] %}
+  <a class="chip {{ 'active' if view == key }}" href="{{ url_for('leads.event_leads', event_id=event.id, view=key, channel=channel) }}">{{ label }}{% if n is not none %} <b>{{ n }}</b>{% endif %}</a>
+  {% endfor %}
+</div>
+
 <form class="row g-2 mb-3" method="get">
+  <input type="hidden" name="view" value="{{ view }}">
   <div class="col-12 col-md-4"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Пошук за ім'ям чи компанією"></div>
   <div class="col-6 col-md-3">
-    <select class="form-select" name="intent" onchange="this.form.submit()" aria-label="Зацікавленість">
-      <option value="">Будь-яка зацікавленість</option>
-      {% for v in (3, 2, 1) %}<option value="{{ v }}" {{ 'selected' if intent == v }}>{{ refs.INTENT_LABELS[v] }}</option>{% endfor %}
+    <select class="form-select" name="channel" onchange="this.form.submit()" aria-label="Канал зв'язку">
+      <option value="">Усі канали</option>
+      {% for k, (label, icon) in refs.CHANNELS.items() %}<option value="{{ k }}" {{ 'selected' if channel == k }}>{{ label }}</option>{% endfor %}
     </select>
   </div>
   <div class="col-6 col-md-3">
@@ -26,33 +33,67 @@
   </div>
 </form>
 
-<div class="small text-body-secondary mb-2">Знайдено: {{ leads|length }}</div>
-<div class="card">
+{% if leads %}
+<div class="card mb-3">
   <div class="table-responsive">
-    <table class="table table-hover align-middle mb-0 leads-table">
+    <table class="table table-hover align-middle mb-0 crm-table">
       <thead>
-        <tr><th>Співрозмовник</th><th>Профіль</th><th>Зацікавленість</th><th class="d-none d-md-table-cell">Наступний крок</th><th class="d-none d-lg-table-cell">Відповідальний</th><th>Фолоу-ап</th><th>Стан</th></tr>
+        <tr><th>Контакт</th><th>Канал</th><th>Зацікавленість</th><th class="d-none d-md-table-cell">Наступний крок</th><th class="d-none d-lg-table-cell">Відповідальний</th><th>Фолоу-ап</th><th>Стан</th></tr>
       </thead>
       <tbody>
       {% for l in leads %}
+        {% set overdue = l.due_date and l.due_date < today.isoformat() and l.status in refs.LEAD_OPEN %}
         <tr>
           <td>
             <a class="fw-semibold text-decoration-none" href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ l.full_name }}</a>
-            {% if l.target_id %}<i class="bi bi-person-check text-success" title="З цільового списку"></i>{% endif %}
+            {% if l.target_id and l.met %}<i class="bi bi-star-fill text-warning" title="Зустріч із цільового списку"></i>{% endif %}
             <div class="small text-body-secondary">{{ l.company or '' }}</div>
           </td>
-          <td>{{ m.level_dots(l.icp_fit, 'Відповідність профілю') }}</td>
-          <td>{{ m.intent_badge(l.intent) }}</td>
+          <td>{{ m.channel(l.channel, l.linkedin_url if l.channel == 'linkedin' else (('mailto:' ~ l.email) if l.channel == 'email' and l.email else None), label=true) if l.channel else '—' }}</td>
+          <td>{{ m.intent_badge(l.intent) if l.met else m.intent_badge(none) }}</td>
           <td class="d-none d-md-table-cell small">{{ l.next_step or '—' }}</td>
           <td class="d-none d-lg-table-cell small">{{ l.owner_name or '—' }}</td>
-          <td class="small text-nowrap">{{ l.due_date|d if l.due_date else '—' }}</td>
+          <td class="small text-nowrap {{ 'text-danger fw-semibold' if overdue }}">{{ l.due_date|d if l.due_date else '—' }}{% if l.last_contact %}<div class="text-body-secondary fw-normal">був {{ l.last_contact|d(short=true) }}</div>{% endif %}</td>
           <td>{{ m.badge(refs.LEAD_STATUSES[l.status]) }}{% if l.deal_stage %}<div class="small text-nowrap mt-1">{{ l.deal_amount|money(event.currency) }}</div>{% endif %}</td>
         </tr>
-      {% else %}
-        <tr><td colspan="7" class="text-center text-body-secondary py-5">Лідів не знайдено</td></tr>
       {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+{% endif %}
+
+{% if missed %}
+<div class="card border-warning-subtle">
+  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span class="fw-semibold"><i class="bi bi-envelope-heart"></i> Не зустрілися, але написати ще можна · {{ missed|length }}</span>
+    {% if can('followup') %}
+    <form method="post" action="{{ url_for('leads.take_all', event_id=event.id) }}" onsubmit="return confirm('Взяти в роботу всіх {{ missed|length }}? Для кожного з’явиться фолоу-ап на сьогодні.')">
+      {{ m.csrf() }}<button class="btn btn-sm btn-warning"><i class="bi bi-plus-circle"></i> Взяти в роботу всіх</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="card-body small text-body-secondary py-2">Контакти зі списку до події, з якими розмови не було. Шаблон першого листа: «Шкода, що не вдалося зустрітися на {{ event.name }}…»</div>
+  <ul class="list-group list-group-flush">
+    {% for t in missed %}
+    <li class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+      <div class="d-flex gap-2 align-items-start min-w-0">
+        {{ m.priority(t.priority) }}
+        <div class="min-w-0">
+          <div class="fw-semibold">{{ t.full_name }} {{ m.channel(t.channel, t.linkedin_url if t.channel == 'linkedin' else None) }}</div>
+          <div class="small text-body-secondary">{{ t.company }} · {{ refs.TARGET_STATUSES[t.status][0]|lower }}{% if t.owner_name %} · {{ t.owner_name }}{% endif %}</div>
+        </div>
+      </div>
+      {% if can('followup') %}
+      <form method="post" action="{{ url_for('leads.take', target_id=t.id, view=view) }}">{{ m.csrf() }}<button class="btn btn-sm btn-outline-primary">Взяти в роботу</button></form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{% if not leads and not missed %}
+<div class="card card-body text-center text-body-secondary py-5">Нікого не знайдено</div>
+{% endif %}
 {% endblock %}

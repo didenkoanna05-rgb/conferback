@@ -5,11 +5,11 @@
 {{ m.event_header(event, phase, tab) }}
 
 <div class="stats-row mb-3">
-  {{ m.stat('Витрати', roi.cost|money(event.currency), costs|length ~ ' позицій кошторису') }}
+  {{ m.stat('Витрати', roi.cost|money(event.currency), 'за фактом' if roi.cost_is_final else 'частково за планом') }}
   {{ m.stat('Оцінка доцільності', (score.total ~ ' з ' ~ score.max) if score.scored else '—',
             score.verdict.text if score.verdict else ('оцінено ' ~ score.scored ~ ' з ' ~ score.n ~ ' критеріїв'),
             score.verdict.tone if score.verdict else '') }}
-  {{ m.stat('Цільовий список', dash.targets_total, dash.meetings_set ~ ' зустрічей домовлено') }}
+  {{ m.stat('Контакти до події', dash.targets_total, dash.meetings_set ~ ' зустрічей домовлено') }}
   {% if phase == 'planned' %}
   {{ m.stat('Прогноз результату', dash.forecast|money(event.currency) if dash.forecast is not none else '—',
             'K·Ch·V − C, K = ' ~ dash.meetings_set if dash.forecast is not none else 'задайте параметри прогнозу',
@@ -30,50 +30,25 @@
 {% endif %}
 
 <div class="row g-3">
-  <div class="col-12 col-lg-6" id="costs">
-    <div class="card h-100">
+  <div class="col-12 col-lg-6">
+    <div class="card mb-3">
       <div class="card-header d-flex justify-content-between align-items-center">
-        <span class="fw-semibold"><i class="bi bi-receipt"></i> Кошторис</span>
-        <span class="fw-semibold">{{ roi.cost|money(event.currency) }}</span>
+        <span class="fw-semibold"><i class="bi bi-wallet2"></i> Витрати</span>
+        <a class="small" href="{{ url_for('events.costs', event_id=event.id) }}">Відкрити вікно витрат <i class="bi bi-arrow-right"></i></a>
       </div>
-      <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0">
-          <thead><tr><th>Категорія</th><th class="d-none d-sm-table-cell">Опис</th><th class="text-end">Сума</th>{% if can('event_edit') %}<th></th>{% endif %}</tr></thead>
-          <tbody>
-          {% for c in costs %}
-            <tr>
-              <td>{{ c.category }}<div class="small text-body-secondary d-sm-none">{{ c.description or '' }}</div></td>
-              <td class="d-none d-sm-table-cell small text-body-secondary">{{ c.description or '' }}</td>
-              <td class="text-end text-nowrap">{{ c.amount|money(event.currency) }}</td>
-              {% if can('event_edit') %}
-              <td class="text-end">
-                <form method="post" action="{{ url_for('events.delete_cost', event_id=event.id, item_id=c.id) }}" onsubmit="return confirm('Вилучити позицію?')">
-                  {{ m.csrf() }}<button class="btn btn-sm btn-link text-danger p-0" aria-label="Вилучити"><i class="bi bi-x-lg"></i></button>
-                </form>
-              </td>
-              {% endif %}
-            </tr>
-          {% else %}
-            <tr><td colspan="4" class="text-center text-body-secondary py-4">Кошторис порожній</td></tr>
-          {% endfor %}
-          </tbody>
-        </table>
+      <div class="card-body">
+        <div class="row text-center g-2 mb-2">
+          <div class="col-4"><div class="small text-body-secondary">План</div><div class="fw-semibold">{{ roi.cost_planned|money(event.currency) }}</div></div>
+          <div class="col-4"><div class="small text-body-secondary">Факт</div><div class="fw-semibold">{{ roi.cost_actual|money(event.currency) if roi.cost_actual else '—' }}</div></div>
+          <div class="col-4"><div class="small text-body-secondary">Для ROI</div><div class="fw-semibold">{{ roi.cost|money(event.currency) }}</div></div>
+        </div>
+        {% for c in by_category %}
+        <div class="d-flex justify-content-between small mt-2"><span>{{ c.name }}</span><span>{{ c.total|money(event.currency) }}</span></div>
+        {{ m.bar(c.total, roi.cost, 'secondary') }}
+        {% else %}
+        <div class="text-body-secondary text-center py-3">Кошторис ще порожній</div>
+        {% endfor %}
       </div>
-      {% if can('event_edit') %}
-      <div class="card-body border-top">
-        <form method="post" action="{{ url_for('events.add_cost', event_id=event.id) }}" class="row g-2">
-          {{ m.csrf() }}
-          <div class="col-12 col-sm-5">
-            <select class="form-select" name="category_id" required aria-label="Категорія">
-              {% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}
-            </select>
-          </div>
-          <div class="col-7 col-sm-4"><input class="form-control" name="description" placeholder="Опис" maxlength="300"></div>
-          <div class="col-5 col-sm-3"><input class="form-control" name="amount" placeholder="Сума" inputmode="decimal" required></div>
-          <div class="col-12"><button class="btn btn-outline-primary w-100"><i class="bi bi-plus-lg"></i> Додати позицію</button></div>
-        </form>
-      </div>
-      {% endif %}
     </div>
   </div>
 

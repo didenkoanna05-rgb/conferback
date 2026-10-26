@@ -40,8 +40,8 @@
         <div class="mini-stats">
           <div><span>Витрати</span><b>{{ c.roi.cost|money(e.currency) }}</b></div>
           {% if c.phase == 'planned' %}
-          <div><span>Цільовий список</span><b>{{ c.targets }}</b></div>
-          <div><span>Оцінка</span><b>{% if c.score.scored %}{{ c.score.total }} з {{ c.score.max }}{% else %}—{% endif %}</b></div>
+          <div><span>Контакти</span><b>{{ c.targets }}</b></div>
+          <div><span>Зустрічей</span><b>{{ c.meetings }}</b></div>
           {% else %}
           <div><span>Ліди</span><b>{{ c.leads }}</b></div>
           <div><span>Дохід</span><b>{{ c.roi.revenue|money(e.currency) }}</b></div>

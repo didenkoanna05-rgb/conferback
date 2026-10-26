@@ -34,7 +34,7 @@
         <select class="form-select" name="target_id" id="targetSelect" size="5" aria-label="Контакт зі списку">
           {% for t in targets %}
           <option value="{{ t.id }}" data-name="{{ t.full_name }}" data-company="{{ t.company }}" data-position="{{ t.position or '' }}">
-            {{ '★ ' if t.status == 'meeting' }}{{ t.full_name }} — {{ t.company }}
+            {{ '★ ' ~ (t.meeting_at[11:16] ~ ' ' if t.meeting_at else '') if t.status == 'meeting' }}{{ t.full_name }} — {{ t.company }}
           </option>
           {% endfor %}
         </select>
@@ -58,9 +58,17 @@
         <div class="row g-2 mt-1">
           <div class="col-12"><input class="form-control" name="position" id="position" placeholder="Посада" maxlength="200"></div>
           <div class="col-12 col-sm-6"><input class="form-control" type="email" name="email" placeholder="E-mail" inputmode="email"></div>
-          <div class="col-12 col-sm-6"><input class="form-control" type="tel" name="phone" placeholder="Телефон" inputmode="tel"></div>
+          <div class="col-12 col-sm-6"><input class="form-control" type="tel" name="phone" placeholder="Телефон / WhatsApp" inputmode="tel"></div>
+          <div class="col-12"><input class="form-control" type="url" name="linkedin_url" placeholder="Посилання на LinkedIn"></div>
         </div>
       </details>
+      <div class="form-label mt-3">Як далі зв'язатися</div>
+      <div class="channel-buttons" role="radiogroup" aria-label="Канал зв'язку">
+        {% for k, (label, icon) in refs.CHANNELS.items() if k != 'in_person' %}
+        <input type="radio" class="btn-check" name="channel" id="ch_{{ k }}" value="{{ k }}">
+        <label class="btn btn-sm btn-outline-secondary" for="ch_{{ k }}"><i class="bi bi-{{ icon }}"></i> {{ label.split(' ')[0] if k != 'event_app' else 'Застосунок' }}</label>
+        {% endfor %}
+      </div>
     </section>
 
     <section class="cap-section">

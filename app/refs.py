@@ -59,17 +59,36 @@ TARGET_SOURCES = {
     "import": "Імпорт переліку",
 }
 
+# Канали зв'язку: назва та іконка Bootstrap Icons
+CHANNELS = {
+    "linkedin": ("LinkedIn", "linkedin"),
+    "email": ("E-mail", "envelope"),
+    "event_app": ("Застосунок конференції", "phone"),
+    "messenger": ("WhatsApp / месенджер", "whatsapp"),
+    "phone": ("Дзвінок", "telephone"),
+    "in_person": ("Особисто", "person-walking"),
+}
+
+# Пріоритет контакту до події (сегментація P1/P2/P3)
+PRIORITIES = {
+    1: ("P1", "Активно шукаємо зустрічі", "danger"),
+    2: ("P2", "Підходить, час невідомий", "warning"),
+    3: ("P3", "Нетворкінг і партнерства", "secondary"),
+}
+
 # Рис. 3.8: стани цільового контакту в порядку життєвого циклу
 TARGET_STATUSES = {
     "candidate": ("У списку", "secondary"),
     "contacted": ("Повідомлення надіслано", "info"),
-    "replied": ("У листуванні", "primary"),
-    "confirmed": ("Буде на події", "teal"),
-    "meeting": ("Зустріч домовлено", "success"),
-    "declined": ("Не буде на події", "dark"),
+    "replied": ("Отримано відповідь", "primary"),
+    "meeting": ("Зустріч домовлено", "warning"),
+    "met": ("Зустрілися", "success"),
+    "not_interested": ("Не зацікавлений", "dark"),
     "no_reply": ("Не відповів", "light"),
 }
-TARGET_FINAL = {"declined", "no_reply"}
+TARGET_FINAL = {"not_interested", "no_reply"}
+# Кому після події ще можна написати, якщо розмови не було
+TARGET_REACHABLE = ("contacted", "replied", "meeting", "no_reply")
 
 # Рис. 3.9: стани ліда
 LEAD_STATUSES = {
@@ -102,13 +121,6 @@ NEXT_STEPS = [
     "Зустріч в офісі",
 ]
 
-FOLLOWUP_CHANNELS = {
-    "email": "Лист",
-    "call": "Дзвінок",
-    "meeting": "Зустріч",
-    "messenger": "Месенджер",
-    "linkedin": "LinkedIn",
-}
 
 FOLLOWUP_RESULTS = {
     "no_answer": "Не відповів",

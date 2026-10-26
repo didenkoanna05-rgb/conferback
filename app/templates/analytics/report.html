@@ -43,12 +43,12 @@
         <table class="table table-sm">
           <tbody>
           {% for c in by_category %}
-            <tr><td>{{ c.name }}</td><td class="w-50">{{ m.bar(c.s, r.cost, 'secondary') }}</td><td class="text-end text-nowrap">{{ c.s|money(cur) }}</td></tr>
+            <tr><td>{{ c.name }}</td><td class="w-50">{{ m.bar(c.total, r.cost, 'secondary') }}</td><td class="text-end text-nowrap">{{ c.total|money(cur) }}</td></tr>
           {% else %}
             <tr><td class="text-body-secondary">Кошторис порожній</td></tr>
           {% endfor %}
           </tbody>
-          <tfoot><tr class="fw-semibold"><td>Разом (C)</td><td></td><td class="text-end text-nowrap">{{ r.cost|money(cur) }}</td></tr></tfoot>
+          <tfoot><tr class="fw-semibold"><td>Разом (C){% if not r.cost_is_final %}<div class="small fw-normal text-body-secondary">частина сум ще планові</div>{% endif %}</td><td></td><td class="text-end text-nowrap">{{ r.cost|money(cur) }}</td></tr></tfoot>
         </table>
       </section>
       <section class="col-12 col-md-6">
@@ -64,7 +64,7 @@
         <table class="table table-sm mb-0">
           <tbody>
             <tr><td>Оцінка доцільності</td><td class="text-end">{% if score.scored %}{{ score.total }} з {{ score.max }}{% if score.verdict %} · {{ score.verdict.text }}{% endif %}{% else %}—{% endif %}</td></tr>
-            <tr><td>Цільовий список / зустрічей домовлено</td><td class="text-end">{{ dash.targets_total }} / {{ dash.meetings_set }}</td></tr>
+            <tr><td>Контакти до події / зустрічей домовлено / відбулося</td><td class="text-end">{{ dash.targets_total }} / {{ dash.meetings_set }} / {{ dash.meetings_held }}</td></tr>
             <tr><td>Розмов / кваліфікованих лідів</td><td class="text-end">{{ dash.leads_total }} / {{ dash.qualified }}</td></tr>
             <tr><td>Вартість кваліфікованого ліда</td><td class="text-end">{{ dash.cost_per_qualified|money(cur) }}</td></tr>
             <tr><td>Відкриті угоди</td><td class="text-end">{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</td></tr>

@@ -63,11 +63,11 @@ EVENTS = [
     {
         "name": "Tech Show London 2026", "city": "Лондон", "start": "2026-03-04", "end": "2026-03-05",
         "booth": 1, "goal": "Перевірити британський ринок: знайти 5 компаній для пілотних проєктів.",
-        "costs": [("Реєстраційний внесок", "Стенд 3×3 м", 8000), ("Переїзд", "Квитки на 3 особи", 3500),
-                  ("Проживання", "Готель, 3 ночі", 2000), ("Стенд і оформлення", "Банер, освітлення", 1500),
-                  ("Робочий час персоналу", "3 особи × 2 дні", 1200), ("Матеріали", "Буклети, сувеніри", 800)],
+        "costs": [("Реєстраційний внесок", "Стенд 3×3 м", 8000, 8000), ("Переїзд", "Квитки на 3 особи", 3000, 3500),
+                  ("Проживання", "Готель, 3 ночі", 2000, 2000), ("Стенд і оформлення", "Банер, освітлення", 1200, 1500),
+                  ("Робочий час персоналу", "3 особи × 2 дні", 1200, 1200), ("Матеріали", "Буклети, сувеніри", 1000, 800)],
         "scores": [3, 2, 2, 2, 3, 2, 2, 2],
-        "targets": {"contacted": 10, "replied": 4, "confirmed": 8, "meeting": 6, "declined": 15, "no_reply": 25},
+        "targets": {"contacted": 10, "replied": 12, "meeting": 6, "not_interested": 15, "no_reply": 25},
         "leads": 58, "planned": 9,
         "deals": [("won", "new", 8500)],
         "lost": 2, "open": 0, "active_queue": False,
@@ -75,11 +75,11 @@ EVENTS = [
     {
         "name": "Money20/20 Europe 2026", "city": "Амстердам", "start": "2026-06-02", "end": "2026-06-04",
         "booth": 1, "goal": "Зустрітися з банками та платіжними компаніями Бенілюксу; закрити дві угоди, що вже в роботі.",
-        "costs": [("Реєстраційний внесок", "Участь зі стендом", 12000), ("Проживання", "Готель, 4 ночі × 3 особи", 4800),
-                  ("Переїзд", "Квитки Київ—Амстердам", 3800), ("Стенд і оформлення", "Забудова стенда", 3200),
-                  ("Робочий час персоналу", "3 особи × 3 дні", 2600), ("Матеріали", "Друк, мерч", 900)],
+        "costs": [("Реєстраційний внесок", "Участь зі стендом", 12000, 12000), ("Проживання", "Готель, 4 ночі × 3 особи", 4200, 4800),
+                  ("Переїзд", "Квитки Київ—Амстердам", 3500, 3800), ("Стенд і оформлення", "Забудова стенда", 3500, 3200),
+                  ("Робочий час персоналу", "3 особи × 3 дні", 2600, 2600), ("Матеріали", "Друк, мерч", 1000, 900)],
         "scores": [5, 4, 4, 4, 4, 3, 4, 3],
-        "targets": {"candidate": 12, "contacted": 23, "replied": 5, "confirmed": 9, "meeting": 7, "declined": 11, "no_reply": 17},
+        "targets": {"candidate": 12, "contacted": 23, "replied": 14, "meeting": 7, "not_interested": 11, "no_reply": 17},
         "leads": 112, "planned": 14,
         "deals": [("won", "new", 42000), ("won", "new", 26000), ("won", "new", 18000),
                   ("won", "accelerated", 31000), ("won", "accelerated", 18000)],
@@ -88,29 +88,36 @@ EVENTS = [
     {
         "name": "Black Hat USA 2026", "city": "Лас-Вегас", "start": "2026-08-01", "end": "2026-08-06",
         "booth": 0, "goal": "Без стенда: зустрічі з CISO компаній зі списку, пошук партнерів з безпеки.",
-        "costs": [("Реєстраційний внесок", "Квитки на 3 особи", 9900), ("Переїзд", "Переліт", 6800),
-                  ("Проживання", "Готель, 6 ночей", 6400), ("Робочий час персоналу", "3 особи × 6 днів", 2000),
-                  ("Матеріали", "Візитки, презентації", 800)],
+        "costs": [("Реєстраційний внесок", "Квитки на 3 особи", 9900, 9900), ("Переїзд", "Переліт", 6000, 6800),
+                  ("Проживання", "Готель, 6 ночей", 6000, 6400), ("Робочий час персоналу", "3 особи × 6 днів", 2000, 2000),
+                  ("Матеріали", "Візитки, презентації", 600, 800)],
         "scores": [5, 4, 4, 3, 5, 3, 4, 4],
-        "targets": {"replied": 3, "confirmed": 10, "meeting": 9, "declined": 18, "no_reply": 30},
+        "targets": {"replied": 13, "meeting": 9, "not_interested": 18, "no_reply": 30},
         "leads": 70, "planned": 15,
         "deals": [("won", "new", 35000)],
-        "lost": 1, "open": 3, "active_queue": True,
+        "lost": 1, "open": 3, "active_queue": True, "take_unmet": 8,
     },
     {
         "name": "Web Summit Lisbon 2026", "city": "Лісабон", "start": "2026-11-09", "end": "2026-11-12",
         "booth": 1, "goal": "Домовитися про 10 зустрічей заздалегідь; знайти партнерів у Португалії та Іспанії.",
-        "costs": [("Реєстраційний внесок", "Стенд Alpha", 6500), ("Переїзд", "Переліт", 2500),
-                  ("Проживання", "Апартаменти, 4 ночі", 2200), ("Робочий час персоналу", "2 особи × 4 дні", 1800),
-                  ("Матеріали", "Буклети", 600), ("Інше", "Транспорт на місці", 400)],
+        "costs": [("Реєстраційний внесок", "Стенд Alpha", 6500, 6500), ("Переїзд", "Переліт", 2500, 2350),
+                  ("Проживання", "Апартаменти, 4 ночі", 2200, None), ("Робочий час персоналу", "2 особи × 4 дні", 1800, None),
+                  ("Матеріали", "Буклети", 600, None), ("Інше", "Транспорт на місці", 400, None)],
         "scores": [5, 4, 3, 3, 5, 4, 4, 4],
-        "targets": {"candidate": 12, "contacted": 15, "replied": 8, "confirmed": 6, "meeting": 6, "declined": 2, "no_reply": 1},
+        "targets": {"candidate": 12, "contacted": 15, "replied": 12, "meeting": 8, "not_interested": 2, "no_reply": 1},
         "leads": 0, "planned": 0, "close_rate": 0.2, "avg_deal": 25000,
         "deals": [], "lost": 0, "open": 0, "active_queue": False,
     },
 ]
 
 SOURCES = ["event_site", "event_app", "linkedin", "own_base", "manual"]
+TARGET_CHANNELS = ["linkedin", "email", "event_app", "messenger"]
+LEAD_CHANNELS = ["email", "linkedin", "messenger", "phone"]
+PLACES = ["Наш стенд", "Кав'ярня біля зали 1", "Лаунж для учасників", "Зона нетворкінгу", "Стенд партнера"]
+
+
+def linkedin_for(name):
+    return "https://www.linkedin.com/in/" + name.lower().replace(" ", "-").replace("é", "e").replace("ü", "u") + "-demo"
 
 
 def person():
@@ -137,9 +144,9 @@ def seed():
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             (ev["name"], ev["city"], ev["start"], ev["end"], ev["goal"], ev["booth"],
              ev.get("close_rate", 0.2), ev.get("avg_deal", 25000))).lastrowid
-        for cat, desc, amount in ev["costs"]:
-            db.execute("INSERT INTO cost_items (event_id, category_id, description, amount) VALUES (?, ?, ?, ?)",
-                       (eid, cats[cat], desc, amount))
+        for cat, desc, planned, actual in ev["costs"]:
+            db.execute("INSERT INTO cost_items (event_id, category_id, description, planned, actual) VALUES (?, ?, ?, ?, ?)",
+                       (eid, cats[cat], desc, planned, actual))
         for cid, score in zip(crits, ev["scores"]):
             db.execute("INSERT INTO event_scores (event_id, criterion_id, score) VALUES (?, ?, ?)", (eid, cid, score))
 
@@ -150,15 +157,23 @@ def seed():
             for _ in range(count):
                 name, company = person(), rnd.choice(COMPANIES)
                 contacted = None if status == "candidate" else (start - timedelta(days=rnd.randint(10, 35))).isoformat()
+                meeting_at = place = None
+                if status == "meeting":
+                    day = start + timedelta(days=rnd.randint(0, (end - start).days))
+                    meeting_at = f"{day.isoformat()}T{rnd.randint(9, 17):02d}:{rnd.choice(['00', '30']):s}"
+                    place = rnd.choice(PLACES)
                 tid = db.execute(
-                    "INSERT INTO targets (event_id, full_name, company, position, email, source, status, owner_id, contacted_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (eid, name, company, rnd.choice(POSITIONS), email_for(name, company), rnd.choice(SOURCES),
-                     status, rnd.choice(managers), contacted)).lastrowid
+                    "INSERT INTO targets (event_id, full_name, company, position, email, linkedin_url, channel, priority, "
+                    "source, status, owner_id, contacted_at, meeting_at, meeting_place) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (eid, name, company, rnd.choice(POSITIONS), email_for(name, company), linkedin_for(name),
+                     rnd.choices(TARGET_CHANNELS, weights=[5, 3, 2, 1])[0],
+                     1 if status == "meeting" else rnd.choices([1, 2, 3], weights=[2, 5, 3])[0],
+                     rnd.choice(SOURCES), status, rnd.choice(managers), contacted, meeting_at, place)).lastrowid
                 target_rows.append((tid, name, company, status))
 
         # Ліди: заплановані зустрічі беремо з тих, хто домовився або підтвердив участь
-        planned_pool = [t for t in target_rows if t[3] in ("meeting", "confirmed")]
+        planned_pool = [t for t in target_rows if t[3] in ("meeting", "replied")]
         planned_pool.sort(key=lambda t: t[3] != "meeting")
         lead_ids = []
         for i in range(ev["leads"]):
@@ -169,11 +184,14 @@ def seed():
             day = start + timedelta(days=rnd.randint(0, (end - start).days))
             captured = datetime.combine(day, datetime.min.time()) + timedelta(hours=rnd.randint(9, 17), minutes=rnd.randint(0, 59))
             no_prospect = icp == 1 and intent == 1 and rnd.random() < 0.6
+            if target:
+                db.execute("UPDATE targets SET status = 'met' WHERE id = ?", (target[0],))
             lid = db.execute(
-                "INSERT INTO leads (event_id, target_id, full_name, company, position, email, icp_fit, intent, need_topic, "
-                "details, next_step, owner_id, due_date, captured_at, captured_by, status, client_uid) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT INTO leads (event_id, target_id, full_name, company, position, email, linkedin_url, channel, "
+                "icp_fit, intent, need_topic, details, next_step, owner_id, due_date, captured_at, captured_by, status, "
+                "client_uid) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (eid, target[0] if target else None, name, company, rnd.choice(POSITIONS), email_for(name, company),
+                 linkedin_for(name), rnd.choices(LEAD_CHANNELS, weights=[5, 4, 2, 1])[0],
                  icp, intent, rnd.choice(TOPICS), rnd.choice(DETAILS), rnd.choice(STEPS), rnd.choice(managers),
                  None if no_prospect else followup_date(intent, day).isoformat(),
                  captured.isoformat(timespec="seconds"), rnd.choice(reps),
@@ -214,6 +232,18 @@ def seed():
             else:
                 add_followups(db, lid, day, rnd.randint(1, 3), managers, final="refused")
                 db.execute("UPDATE leads SET status = 'closed', due_date = NULL WHERE id = ?", (lid,))
+        # Контакти зі списку, з якими не зустрілися, але після події взяли в роботу
+        unmet = [t for t in target_rows if t[3] in ("replied", "meeting", "no_reply")
+                 and not db.execute("SELECT 1 FROM leads WHERE target_id = ?", (t[0],)).fetchone()]
+        for tid, name, company, _ in unmet[:ev.get("take_unmet", 0)]:
+            db.execute(
+                "INSERT INTO leads (event_id, target_id, full_name, company, email, linkedin_url, channel, met, owner_id, "
+                "due_date, captured_at, captured_by, status, next_step, client_uid) "
+                "VALUES (?, ?, ?, ?, ?, ?, 'linkedin', 0, ?, ?, ?, ?, 'new', ?, ?)",
+                (eid, tid, name, company, email_for(name, company), linkedin_for(name), rnd.choice(managers),
+                 (today + timedelta(days=rnd.randint(-2, 5))).isoformat(),
+                 datetime.combine(end + timedelta(days=1), datetime.min.time()).isoformat(timespec="seconds"),
+                 rnd.choice(managers), "Лист «шкода, що не зустрілися»", f"unmet-{tid}"))
     db.commit()
 
 
@@ -223,7 +253,7 @@ def add_followups(db, lead_id, day, count, managers, final=None):
         last = k == count - 1
         result = final if last and final else rnd.choice(["no_answer", "talking", "meeting_set"])
         db.execute("INSERT INTO followups (lead_id, channel, done_on, result, note, user_id) VALUES (?, ?, ?, ?, ?, ?)",
-                   (lead_id, rnd.choice(["email", "call", "meeting", "linkedin"]), done.isoformat(), result, None,
+                   (lead_id, rnd.choice(["email", "phone", "in_person", "linkedin"]), done.isoformat(), result, None,
                     rnd.choice(managers)))
         done += timedelta(days=rnd.randint(3, 12))
 

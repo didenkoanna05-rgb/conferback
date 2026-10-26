@@ -60,6 +60,9 @@ def save_lead(event_id, data, user_id):
         "position": clean(data.get("position"), 200) or (target["position"] if target else None),
         "email": clean(data.get("email"), 200) or (target["email"] if target else None),
         "phone": clean(data.get("phone"), 50) or (target["phone"] if target else None),
+        "linkedin_url": clean(data.get("linkedin_url"), 300) or (target["linkedin_url"] if target else None),
+        "channel": data.get("channel") if data.get("channel") in refs.CHANNELS
+        else (target["channel"] if target else None),
         "icp_fit": parse_int(data.get("icp_fit"), 1, 3),
         "intent": intent,
         "need_topic": clean(data.get("need_topic"), 200),
@@ -72,12 +75,16 @@ def save_lead(event_id, data, user_id):
         "status": status,
         "client_uid": clean(data.get("client_uid"), 64) or uuid.uuid4().hex,
     }
-    return execute(
-        "INSERT INTO leads (event_id, target_id, full_name, company, position, email, phone, icp_fit, intent, "
-        "need_topic, details, next_step, owner_id, due_date, captured_at, captured_by, status, client_uid) "
-        "VALUES (:event_id, :target_id, :full_name, :company, :position, :email, :phone, :icp_fit, :intent, "
-        ":need_topic, :details, :next_step, :owner_id, :due_date, :captured_at, :captured_by, :status, :client_uid)",
-        row)
+    lead_id = execute(
+        "INSERT INTO leads (event_id, target_id, full_name, company, position, email, phone, linkedin_url, channel, "
+        "icp_fit, intent, need_topic, details, next_step, owner_id, due_date, captured_at, captured_by, status, "
+        "client_uid) VALUES (:event_id, :target_id, :full_name, :company, :position, :email, :phone, :linkedin_url, "
+        ":channel, :icp_fit, :intent, :need_topic, :details, :next_step, :owner_id, :due_date, :captured_at, "
+        ":captured_by, :status, :client_uid)", row)
+    if target_id:
+        # Розмова з контактом зі списку відбулася
+        execute("UPDATE targets SET status = 'met' WHERE id = ?", (target_id,))
+    return lead_id
 
 
 @bp.route("/events/<int:event_id>/capture", methods=["GET", "POST"])
@@ -93,9 +100,9 @@ def capture(event_id):
             flash(str(e), "danger")
         return redirect(url_for("leads.capture", event_id=event_id))
     targets = query(
-        "SELECT id, full_name, company, position, status FROM targets WHERE event_id = ? "
-        "AND status NOT IN ('declined') ORDER BY CASE status WHEN 'meeting' THEN 0 WHEN 'confirmed' THEN 1 "
-        "ELSE 2 END, full_name", (event_id,))
+        "SELECT id, full_name, company, position, status, meeting_at FROM targets WHERE event_id = ? "
+        "AND status NOT IN ('not_interested', 'met') ORDER BY status != 'meeting', meeting_at, priority, full_name",
+        (event_id,))
     recent = query(
         "SELECT id, full_name, company, intent, captured_at FROM leads WHERE event_id = ? AND captured_by = ? "
         "ORDER BY captured_at DESC LIMIT 5", (event_id, g.user["id"]))
@@ -142,26 +149,94 @@ def api_sync():
 
 @bp.route("/events/<int:event_id>/leads")
 def event_leads(event_id):
+    """Ліди події як у CRM: усі, з ким говорили, і ті, з ким не зустрілися, але написати ще можна."""
     event = get_event(event_id)
-    intent = parse_int(request.args.get("intent"), 1, 3)
+    view = request.args.get("view", "all")
+    channel = request.args.get("channel")
     status = request.args.get("status")
     q = (request.args.get("q") or "").strip()
-    sql = ("SELECT l.*, u.full_name AS owner_name, d.stage AS deal_stage, d.amount AS deal_amount "
+    sql = ("SELECT l.*, u.full_name AS owner_name, d.stage AS deal_stage, d.amount AS deal_amount, "
+           "(SELECT MAX(done_on) FROM followups f WHERE f.lead_id = l.id) AS last_contact "
            "FROM leads l LEFT JOIN users u ON u.id = l.owner_id LEFT JOIN deals d ON d.lead_id = l.id "
            "WHERE l.event_id = ?")
     args = [event_id]
-    if intent:
-        sql += " AND l.intent = ?"
-        args.append(intent)
+    if view == "met":
+        sql += " AND l.met = 1"
+    elif view == "unmet":
+        sql += " AND l.met = 0"
+    if channel in refs.CHANNELS:
+        sql += " AND l.channel = ?"
+        args.append(channel)
     if status in refs.LEAD_STATUSES:
         sql += " AND l.status = ?"
         args.append(status)
     if q:
         sql += " AND (l.full_name LIKE ? OR l.company LIKE ?)"
         args += [f"%{q}%", f"%{q}%"]
-    sql += " ORDER BY l.captured_at DESC"
-    return render_template("leads/list.html", event=event, phase=stats.event_phase(event),
-                           leads=query(sql, args), intent=intent, status=status, q=q, tab="leads")
+    sql += " ORDER BY l.status IN ('won', 'closed', 'no_action'), l.due_date IS NULL, l.due_date, l.intent DESC"
+    leads = query(sql, args) if view != "missed" else []
+
+    # Контакти зі списку, з якими не зустрілися і яких ще не взяли в роботу
+    missed_sql = ("SELECT t.*, u.full_name AS owner_name FROM targets t LEFT JOIN users u ON u.id = t.owner_id "
+                  "WHERE t.event_id = ? AND t.status IN ({}) "
+                  "AND NOT EXISTS (SELECT 1 FROM leads l WHERE l.target_id = t.id)").format(
+        ",".join("?" * len(refs.TARGET_REACHABLE)))
+    missed_args = [event_id, *refs.TARGET_REACHABLE]
+    if channel in refs.CHANNELS:
+        missed_sql += " AND t.channel = ?"
+        missed_args.append(channel)
+    if q:
+        missed_sql += " AND (t.full_name LIKE ? OR t.company LIKE ?)"
+        missed_args += [f"%{q}%", f"%{q}%"]
+    missed = query(missed_sql + " ORDER BY t.priority, t.full_name", missed_args) \
+        if view in ("all", "missed") and not status else []
+    counts = query(
+        "SELECT SUM(met = 1) AS met, SUM(met = 0) AS unmet, COUNT(*) AS total FROM leads WHERE event_id = ?",
+        (event_id,), one=True)
+    return render_template("leads/list.html", event=event, phase=stats.event_phase(event), leads=leads,
+                           missed=missed, view=view, channel=channel, status=status, q=q, counts=counts,
+                           tab="leads")
+
+
+def take_target(target, user_id):
+    """Взяти в роботу контакт, з яким не зустрілися: створюється лід без розмови (met = 0)."""
+    return execute(
+        "INSERT INTO leads (event_id, target_id, full_name, company, position, email, phone, linkedin_url, channel, "
+        "met, owner_id, due_date, captured_at, captured_by, status, details, next_step, client_uid) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, 'new', ?, ?, ?)",
+        (target["event_id"], target["id"], target["full_name"], target["company"], target["position"],
+         target["email"], target["phone"], target["linkedin_url"], target["channel"],
+         target["owner_id"] or (user_id if "manager" in g.user["roles"] else None),
+         date.today().isoformat(), datetime.now().isoformat(timespec="seconds"), user_id,
+         target["note"], "Лист «шкода, що не зустрілися»", uuid.uuid4().hex))
+
+
+@bp.route("/targets/<int:target_id>/take", methods=["POST"])
+@require("followup")
+def take(target_id):
+    target = query("SELECT * FROM targets WHERE id = ?", (target_id,), one=True)
+    if target is None:
+        abort(404)
+    if query("SELECT 1 FROM leads WHERE target_id = ?", (target_id,), one=True):
+        flash("Цей контакт уже в роботі.", "info")
+    else:
+        take_target(target, g.user["id"])
+        flash(f"{target['full_name']} — у роботі, фолоу-ап на сьогодні.", "success")
+    return redirect(url_for("leads.event_leads", event_id=target["event_id"], view=request.args.get("view", "all")))
+
+
+@bp.route("/events/<int:event_id>/take-all", methods=["POST"])
+@require("followup")
+def take_all(event_id):
+    get_event(event_id)
+    rows = query(
+        "SELECT * FROM targets t WHERE t.event_id = ? AND t.status IN ({}) "
+        "AND NOT EXISTS (SELECT 1 FROM leads l WHERE l.target_id = t.id)".format(
+            ",".join("?" * len(refs.TARGET_REACHABLE))), (event_id, *refs.TARGET_REACHABLE))
+    for t in rows:
+        take_target(t, g.user["id"])
+    flash(f"Узято в роботу контактів: {len(rows)}.", "success")
+    return redirect(url_for("leads.event_leads", event_id=event_id, view="unmet"))
 
 
 def _get_lead(lead_id):
@@ -193,7 +268,7 @@ def edit(lead_id):
     f = request.form
     name = clean(f.get("full_name"), 200)
     intent = parse_int(f.get("intent"), 1, 3)
-    if not name or intent is None:
+    if not name or (intent is None and lead["met"]):
         flash("Ім'я та зацікавленість обов'язкові.", "danger")
         return redirect(url_for("leads.detail", lead_id=lead_id))
     owner = parse_int(f.get("owner_id"), 1, 10**12)
@@ -203,12 +278,15 @@ def edit(lead_id):
         status, due = "no_action", None
     elif status == "no_action":
         status = "new"
-        due = due or calc.followup_date(intent)
+        due = due or (calc.followup_date(intent) if intent else date.today())
+    channel = f.get("channel") if f.get("channel") in refs.CHANNELS else None
     execute(
-        "UPDATE leads SET full_name = ?, company = ?, position = ?, email = ?, phone = ?, icp_fit = ?, intent = ?, "
+        "UPDATE leads SET full_name = ?, company = ?, position = ?, email = ?, phone = ?, linkedin_url = ?, "
+        "channel = ?, icp_fit = ?, intent = ?, "
         "need_topic = ?, details = ?, next_step = ?, owner_id = ?, due_date = ?, status = ? WHERE id = ?",
         (name, clean(f.get("company"), 200), clean(f.get("position"), 200), clean(f.get("email"), 200),
-         clean(f.get("phone"), 50), parse_int(f.get("icp_fit"), 1, 3), intent, clean(f.get("need_topic"), 200),
+         clean(f.get("phone"), 50), clean(f.get("linkedin_url"), 300), channel,
+         parse_int(f.get("icp_fit"), 1, 3), intent, clean(f.get("need_topic"), 200),
          clean(f.get("details"), 3000), clean(f.get("next_step"), 200), owner,
          due.isoformat() if due else None, status, lead_id))
     flash("Картку ліда оновлено.", "success")
@@ -222,7 +300,7 @@ def add_followup(lead_id):
     lead = _get_lead(lead_id)
     f = request.form
     channel, result = f.get("channel"), f.get("result")
-    if channel not in refs.FOLLOWUP_CHANNELS or result not in refs.FOLLOWUP_RESULTS:
+    if channel not in refs.CHANNELS or result not in refs.FOLLOWUP_RESULTS:
         flash("Оберіть канал і результат.", "danger")
         return redirect(url_for("leads.detail", lead_id=lead_id))
     done_on = parse_date(f.get("done_on")) or date.today()

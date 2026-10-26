@@ -51,7 +51,9 @@ CREATE TABLE IF NOT EXISTS cost_items (
     event_id    INTEGER NOT NULL REFERENCES events(id) ON DELETE CASCADE,
     category_id INTEGER NOT NULL REFERENCES cost_categories(id),
     description TEXT,
-    amount      REAL    NOT NULL CHECK (amount >= 0)
+    -- Планова сума вноситься до поїздки, фактична — коли з'являються чеки
+    planned     REAL    NOT NULL DEFAULT 0 CHECK (planned >= 0),
+    actual      REAL    CHECK (actual IS NULL OR actual >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS event_scores (
@@ -69,12 +71,18 @@ CREATE TABLE IF NOT EXISTS targets (
     position     TEXT,
     email        TEXT,
     phone        TEXT,
+    linkedin_url TEXT,
+    channel      TEXT    NOT NULL DEFAULT 'linkedin'
+                 CHECK (channel IN ('linkedin', 'email', 'event_app', 'messenger', 'phone', 'in_person')),
+    priority     INTEGER NOT NULL DEFAULT 2 CHECK (priority BETWEEN 1 AND 3),
     source       TEXT    NOT NULL DEFAULT 'manual'
                  CHECK (source IN ('event_site', 'event_app', 'linkedin', 'own_base', 'manual', 'import')),
     status       TEXT    NOT NULL DEFAULT 'candidate'
-                 CHECK (status IN ('candidate', 'contacted', 'replied', 'confirmed', 'meeting', 'declined', 'no_reply')),
+                 CHECK (status IN ('candidate', 'contacted', 'replied', 'meeting', 'met', 'not_interested', 'no_reply')),
     owner_id     INTEGER REFERENCES users(id) ON DELETE SET NULL,
     contacted_at DATE,
+    meeting_at   DATETIME,
+    meeting_place TEXT,
     note         TEXT
 );
 
@@ -87,8 +95,12 @@ CREATE TABLE IF NOT EXISTS leads (
     position    TEXT,
     email       TEXT,
     phone       TEXT,
+    linkedin_url TEXT,
+    channel     TEXT    CHECK (channel IS NULL OR channel IN ('linkedin', 'email', 'event_app', 'messenger', 'phone', 'in_person')),
+    -- 0: з людиною не зустрілися, але її взяли в роботу після події з цільового списку
+    met         INTEGER NOT NULL DEFAULT 1,
     icp_fit     INTEGER CHECK (icp_fit IS NULL OR icp_fit BETWEEN 1 AND 3),
-    intent      INTEGER NOT NULL CHECK (intent BETWEEN 1 AND 3),
+    intent      INTEGER CHECK (intent IS NULL OR intent BETWEEN 1 AND 3),
     need_topic  TEXT,
     details     TEXT,
     next_step   TEXT,
@@ -104,7 +116,7 @@ CREATE TABLE IF NOT EXISTS leads (
 CREATE TABLE IF NOT EXISTS followups (
     id       INTEGER PRIMARY KEY,
     lead_id  INTEGER NOT NULL REFERENCES leads(id) ON DELETE CASCADE,
-    channel  TEXT    NOT NULL CHECK (channel IN ('email', 'call', 'meeting', 'messenger', 'linkedin')),
+    channel  TEXT    NOT NULL CHECK (channel IN ('linkedin', 'email', 'event_app', 'messenger', 'phone', 'in_person')),
     done_on  DATE    NOT NULL,
     result   TEXT    NOT NULL CHECK (result IN ('no_answer', 'talking', 'meeting_set', 'agreement', 'refused')),
     note     TEXT,

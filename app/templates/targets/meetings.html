@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Зустрічі · {{ event.name }}{% endblock %}
+{% macro meeting_chip(t) %}
+<a class="meet meet-{{ t.status }}" href="{{ url_for('targets.edit', target_id=t.id) if can('targets_edit') else '#' }}" title="{{ t.full_name }} · {{ t.company }}">
+  <span class="meet-time">{{ t.meeting_at[11:16] }}</span>
+  <span class="meet-name"><i class="bi bi-star-fill"></i> {{ t.full_name }}</span>
+  <span class="meet-co">{{ t.company }}{% if t.meeting_place %} · {{ t.meeting_place }}{% endif %}</span>
+  {% if t.status == 'met' %}<span class="meet-done"><i class="bi bi-check2-circle"></i> зустрілися</span>{% endif %}
+</a>
+{% endmacro %}
+{% block content %}
+{{ m.event_header(event, phase, tab) }}
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+  <div class="text-body-secondary">Домовлених зустрічей: <b class="text-body">{{ total }}</b>{% if unscheduled %} · без часу: <b class="text-body">{{ unscheduled|length }}</b>{% endif %}</div>
+  {% if can('targets_edit') %}
+  <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#bookForm"><i class="bi bi-calendar-plus"></i> Призначити зустріч</button>
+  {% endif %}
+</div>
+
+{% if can('targets_edit') %}
+<div class="collapse mb-3" id="bookForm">
+  <form method="post" class="card card-body">
+    {{ m.csrf() }}
+    <div class="row g-2 align-items-end">
+      <div class="col-12 col-md-4"><label class="form-label small">Контакт</label>
+        <select class="form-select" name="target_id" required>
+          {% for c in candidates %}<option value="{{ c.id }}">{{ refs.PRIORITIES[c.priority][0] }} · {{ c.full_name }} — {{ c.company }}{{ ' ★' if c.status == 'meeting' }}</option>{% endfor %}
+        </select></div>
+      <div class="col-6 col-md-2"><label class="form-label small">День</label>
+        <select class="form-select" name="day">{% for d in days %}<option value="{{ d.isoformat() }}">{{ d|d(short=true) }}</option>{% endfor %}</select></div>
+      <div class="col-6 col-md-2"><label class="form-label small">Час</label><input class="form-control" type="time" name="time" value="10:00" min="07:00" max="22:00" step="900" required></div>
+      <div class="col-12 col-md-3"><label class="form-label small">Місце</label><input class="form-control" name="place" placeholder="Стенд, кав'ярня, зала…"></div>
+      <div class="col-12 col-md-1"><button class="btn btn-primary w-100"><i class="bi bi-check-lg"></i></button></div>
+    </div>
+  </form>
+</div>
+{% endif %}
+
+{# Комп'ютер: години в рядках, дні в стовпцях #}
+<div class="card d-none d-md-block mb-3">
+  <div class="cal" style="--days: {{ days|length }}">
+    <div class="cal-corner"></div>
+    {% for d in days %}<div class="cal-day">{{ ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'][d.weekday()] }}, {{ d|d(short=true) }}</div>{% endfor %}
+    {% for h in hours %}
+      <div class="cal-hour">{{ '%02d' % h }}:00</div>
+      {% for d in days %}
+      {% set slot = grid[d.isoformat()][h] %}
+      <div class="cal-slot {{ 'busy' if slot }}">{% for t in slot %}{{ meeting_chip(t) }}{% endfor %}</div>
+      {% endfor %}
+    {% endfor %}
+  </div>
+</div>
+
+{# Телефон: день за днем, лише години з зустрічами та вільні проміжки #}
+<div class="d-md-none">
+  <ul class="nav nav-pills mb-2 flex-nowrap overflow-auto" role="tablist">
+    {% for d in days %}
+    <li class="nav-item"><button class="nav-link {{ 'active' if loop.first }} text-nowrap" data-bs-toggle="pill" data-bs-target="#day{{ loop.index }}" type="button">{{ d|d(short=true) }} <span class="badge text-bg-light">{{ grid[d.isoformat()].values()|map('length')|sum }}</span></button></li>
+    {% endfor %}
+  </ul>
+  <div class="tab-content mb-3">
+    {% for d in days %}
+    <div class="tab-pane fade {{ 'show active' if loop.first }}" id="day{{ loop.index }}">
+      <div class="card"><ul class="list-group list-group-flush">
+      {% for h in hours %}{% set slot = grid[d.isoformat()][h] %}
+        <li class="list-group-item d-flex gap-3 {{ 'cal-free' if not slot }}">
+          <span class="cal-hour-m">{{ '%02d' % h }}:00</span>
+          <div class="flex-grow-1 d-grid gap-1">{% for t in slot %}{{ meeting_chip(t) }}{% else %}<span class="small text-body-tertiary">вільно</span>{% endfor %}</div>
+        </li>
+      {% endfor %}
+      </ul></div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% if unscheduled or outside %}
+<div class="card">
+  <div class="card-header fw-semibold"><i class="bi bi-hourglass-split"></i> Зустріч домовлено, але час не в календарі</div>
+  <ul class="list-group list-group-flush">
+    {% for t in unscheduled + outside %}
+    <li class="list-group-item d-flex justify-content-between gap-2">
+      <span>{{ m.priority(t.priority) }} <b>{{ t.full_name }}</b> <span class="text-body-secondary">· {{ t.company }}</span></span>
+      <span class="small text-body-secondary">{{ t.meeting_at|dt if t.meeting_at else 'час не вказано' }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endblock %}

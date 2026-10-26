@@ -103,38 +103,66 @@ def delete(event_id):
 @bp.route("/events/<int:event_id>")
 def detail(event_id):
     event = get_event(event_id)
-    costs = query(
+    return render_template(
+        "events/detail.html", event=event, phase=stats.event_phase(event),
+        roi=stats.roi_summary(event_id), score=stats.score_summary(event_id),
+        dash=stats.dashboard(event), by_category=stats.costs_by_category(event_id), tab="overview")
+
+
+@bp.route("/events/<int:event_id>/costs")
+def costs(event_id):
+    """Вікно витрат: план і факт за позиціями та категоріями (ФВ-02, ФВ-03)."""
+    event = get_event(event_id)
+    items = query(
         "SELECT ci.*, cc.name AS category FROM cost_items ci JOIN cost_categories cc ON cc.id = ci.category_id "
-        "WHERE ci.event_id = ? ORDER BY ci.amount DESC", (event_id,))
+        "WHERE ci.event_id = ? ORDER BY cc.id, ci.id", (event_id,))
     categories = query("SELECT * FROM cost_categories WHERE is_active = 1 ORDER BY id")
     return render_template(
-        "events/detail.html", event=event, phase=stats.event_phase(event), costs=costs,
-        categories=categories, roi=stats.roi_summary(event_id), score=stats.score_summary(event_id),
-        dash=stats.dashboard(event), tab="overview")
+        "events/costs.html", event=event, phase=stats.event_phase(event), items=items, categories=categories,
+        by_category=stats.costs_by_category(event_id), totals=stats.cost_totals(event_id),
+        roi=stats.roi_summary(event_id), tab="costs")
+
+
+def _read_cost_form():
+    planned = parse_amount(request.form.get("planned") or 0)
+    actual_raw = (request.form.get("actual") or "").strip()
+    actual = parse_amount(actual_raw) if actual_raw else None
+    ok = planned is not None and (not actual_raw or actual is not None)
+    return planned, actual, ok
 
 
 @bp.route("/events/<int:event_id>/costs", methods=["POST"])
 @require("event_edit")
 def add_cost(event_id):
     get_event(event_id)
-    amount = parse_amount(request.form.get("amount"))
+    planned, actual, ok = _read_cost_form()
     category = parse_int(request.form.get("category_id"), 1, 10**9)
-    if amount is None or not category or not query(
+    if not ok or not category or (not planned and actual is None) or not query(
             "SELECT 1 FROM cost_categories WHERE id = ?", (category,), one=True):
-        flash("Оберіть категорію і вкажіть суму (число, не менше нуля).", "danger")
+        flash("Оберіть категорію і вкажіть планову або фактичну суму (число, не менше нуля).", "danger")
     else:
-        execute("INSERT INTO cost_items (event_id, category_id, description, amount) VALUES (?, ?, ?, ?)",
-                (event_id, category, clean(request.form.get("description"), 300), amount))
+        execute("INSERT INTO cost_items (event_id, category_id, description, planned, actual) VALUES (?, ?, ?, ?, ?)",
+                (event_id, category, clean(request.form.get("description"), 300), planned, actual))
         flash("Позицію кошторису додано.", "success")
-    return redirect(url_for("events.detail", event_id=event_id) + "#costs")
+    return redirect(url_for("events.costs", event_id=event_id))
 
 
-@bp.route("/events/<int:event_id>/costs/<int:item_id>/delete", methods=["POST"])
+@bp.route("/events/<int:event_id>/costs/<int:item_id>", methods=["POST"])
 @require("event_edit")
-def delete_cost(event_id, item_id):
-    execute("DELETE FROM cost_items WHERE id = ? AND event_id = ?", (item_id, event_id))
-    flash("Позицію вилучено.", "success")
-    return redirect(url_for("events.detail", event_id=event_id) + "#costs")
+def update_cost(event_id, item_id):
+    if request.form.get("action") == "delete":
+        execute("DELETE FROM cost_items WHERE id = ? AND event_id = ?", (item_id, event_id))
+        flash("Позицію вилучено.", "success")
+        return redirect(url_for("events.costs", event_id=event_id))
+    planned, actual, ok = _read_cost_form()
+    if not ok:
+        flash("Суми мають бути числами, не меншими за нуль.", "danger")
+    else:
+        execute("UPDATE cost_items SET planned = ?, actual = ?, description = COALESCE(?, description) "
+                "WHERE id = ? AND event_id = ?",
+                (planned, actual, clean(request.form.get("description"), 300), item_id, event_id))
+        flash("Суми оновлено.", "success")
+    return redirect(url_for("events.costs", event_id=event_id))
 
 
 @bp.route("/events/<int:event_id>/score", methods=["POST"])

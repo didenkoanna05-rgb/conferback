@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Витрати · {{ event.name }}{% endblock %}
+{% block content %}
+{{ m.event_header(event, phase, tab) }}
+{% set cur = event.currency %}
+{% set diff = totals.actual - totals.planned %}
+{% set edit = can('event_edit') %}
+
+<div class="stats-row mb-3">
+  {{ m.stat('Заплановано', totals.planned|money(cur), totals['items'] ~ ' позицій') }}
+  {{ m.stat('Фактично витрачено', totals.actual|money(cur) if totals.with_actual else '—',
+            'внесено ' ~ totals.with_actual ~ ' з ' ~ totals['items']) }}
+  {% if totals.with_actual %}
+  {{ m.stat('Різниця з планом', ('+' if diff > 0 else '') ~ (diff|money(cur)),
+            'перевитрата' if diff > 0 else ('економія' if diff < 0 else 'точно за планом'),
+            'danger' if diff > 0 else 'success') }}
+  {% endif %}
+  {{ m.stat('Сума для окупності (C)', totals.total|money(cur), 'факт, а де його нема — план', 'primary') }}
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-12 col-lg-7">
+    <div class="card h-100">
+      <div class="card-header fw-semibold"><i class="bi bi-bar-chart"></i> План і факт за категоріями</div>
+      <div class="card-body"><div class="chart-box"><canvas id="costBars"></canvas></div></div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-5">
+    <div class="card h-100">
+      <div class="card-header fw-semibold"><i class="bi bi-pie-chart"></i> Структура витрат</div>
+      <div class="card-body"><div class="chart-box"><canvas id="costPie"></canvas></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header fw-semibold"><i class="bi bi-receipt"></i> Позиції кошторису</div>
+  <div class="cost-rows">
+    <div class="cost-row cost-head d-none d-md-grid">
+      <span>Категорія і опис</span><span class="text-end">План</span><span class="text-end">Факт</span><span></span>
+    </div>
+    {% for it in items %}
+    <form method="post" action="{{ url_for('events.update_cost', event_id=event.id, item_id=it.id) }}" class="cost-row">
+      {{ m.csrf() }}
+      <div class="min-w-0">
+        <div class="fw-medium">{{ it.category }}</div>
+        {% if edit %}<input class="form-control form-control-sm mt-1" name="description" value="{{ it.description or '' }}" placeholder="Опис" aria-label="Опис">
+        {% else %}<div class="small text-body-secondary">{{ it.description or '' }}</div>{% endif %}
+      </div>
+      <label class="cost-cell"><span class="d-md-none small text-body-secondary">План</span>
+        {% if edit %}<input class="form-control form-control-sm text-end" name="planned" value="{{ it.planned|plain }}" inputmode="decimal">
+        {% else %}<span>{{ it.planned|money(cur) }}</span>{% endif %}
+      </label>
+      <label class="cost-cell"><span class="d-md-none small text-body-secondary">Факт</span>
+        {% if edit %}<input class="form-control form-control-sm text-end {{ 'is-over' if it.actual is not none and it.actual > it.planned }}" name="actual" value="{{ it.actual|plain }}" placeholder="ще немає" inputmode="decimal">
+        {% else %}<span>{{ it.actual|money(cur) if it.actual is not none else '—' }}</span>{% endif %}
+      </label>
+      {% if edit %}
+      <div class="d-flex gap-1 justify-content-end">
+        <button class="btn btn-sm btn-outline-primary" title="Зберегти"><i class="bi bi-check-lg"></i></button>
+        <button class="btn btn-sm btn-outline-danger" name="action" value="delete" title="Вилучити" onclick="return confirm('Вилучити позицію?')"><i class="bi bi-trash"></i></button>
+      </div>
+      {% else %}<span></span>{% endif %}
+    </form>
+    {% else %}
+    <div class="text-center text-body-secondary py-4">Кошторис порожній</div>
+    {% endfor %}
+    <div class="cost-row cost-total">
+      <span>Разом</span><span class="text-end">{{ totals.planned|money(cur) }}</span><span class="text-end">{{ totals.actual|money(cur) if totals.with_actual else '—' }}</span><span></span>
+    </div>
+  </div>
+  {% if edit %}
+  <div class="card-body border-top">
+    <form method="post" action="{{ url_for('events.add_cost', event_id=event.id) }}" class="row g-2 align-items-end">
+      {{ m.csrf() }}
+      <div class="col-12 col-md-3"><label class="form-label small">Категорія</label>
+        <select class="form-select" name="category_id" required>{% for cat in categories %}<option value="{{ cat.id }}">{{ cat.name }}</option>{% endfor %}</select></div>
+      <div class="col-12 col-md-4"><label class="form-label small">Опис</label><input class="form-control" name="description" maxlength="300" placeholder="Наприклад, квитки на 2 особи"></div>
+      <div class="col-6 col-md-2"><label class="form-label small">План</label><input class="form-control" name="planned" inputmode="decimal" placeholder="0"></div>
+      <div class="col-6 col-md-2"><label class="form-label small">Факт</label><input class="form-control" name="actual" inputmode="decimal" placeholder="можна пізніше"></div>
+      <div class="col-12 col-md-1"><button class="btn btn-primary w-100" title="Додати"><i class="bi bi-plus-lg"></i></button></div>
+    </form>
+    <div class="form-text">Планову суму вносимо до поїздки, фактичну — коли з'являються чеки. Окупність рахується з фактичних сум, а поки їх немає, з планових.</div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+  CB.bars('costBars', {{ by_category|map(attribute='name')|list|tojson }}, [
+    {label: 'План', data: {{ by_category|map(attribute='planned')|list|tojson }}, color: CB.c.muted},
+    {label: 'Факт', data: {{ by_category|map(attribute='actual')|list|tojson }}, color: CB.c.accent}
+  ], {money: '{{ refs.CURRENCIES[cur] }}'});
+  CB.doughnut('costPie', {{ by_category|map(attribute='name')|list|tojson }}, {{ by_category|map(attribute='total')|list|tojson }}, {money: '{{ refs.CURRENCIES[cur] }}'});
+</script>
+{% endblock %}
