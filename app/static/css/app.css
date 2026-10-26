@@ -200,3 +200,20 @@ a.channel:hover { text-decoration: underline; }
   .crm-table .ch-label { display: none; }
   .crm-table td { padding-left: .4rem; padding-right: .4rem; }
 }
+
+/* ---- Дошка угод ---- */
+.deal-board { display: grid; grid-template-columns: repeat(4, minmax(240px, 1fr)); gap: .75rem; overflow-x: auto; padding-bottom: .5rem; }
+.deal-col { background: #eef2f7; border-radius: .9rem; padding: .6rem; min-height: 12rem; transition: background .15s; }
+.deal-col.drop-target { background: #dfe8f4; outline: 2px dashed var(--bs-primary); }
+.deal-col-won { background: #e8f5ee; }
+.deal-col-lost { background: #f1f1f3; }
+.deal-col-head { display: flex; justify-content: space-between; gap: .5rem; font-size: .9rem; font-weight: 600; padding: .25rem .35rem .6rem; }
+.deal-cards { display: grid; gap: .5rem; }
+.deal-card { background: #fff; border: 1px solid #e3e8ef; border-radius: .7rem; padding: .7rem .75rem; box-shadow: 0 1px 2px rgba(31,58,95,.05); }
+.deal-card[draggable=true] { cursor: grab; }
+.deal-card.dragging { opacity: .5; }
+.deal-col-lost .deal-card { opacity: .75; }
+.deal-empty { text-align: center; color: var(--bs-tertiary-color); font-size: .85rem; padding: 1.5rem 0; }
+@media (min-width: 992px) { .deal-move { display: none; } .deal-card:hover .deal-move, .deal-card:focus-within .deal-move { display: block; } }
+.deal-col, .deal-card { min-width: 0; }
+@media (max-width: 767.98px) { .deal-board { grid-template-columns: 1fr; overflow: visible; } .deal-col { min-height: 0; } }

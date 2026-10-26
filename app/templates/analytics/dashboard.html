@@ -61,7 +61,7 @@
         <div class="kv"><span>Не зустрілися, у роботі</span><b>{{ dash.unmet_in_work }}</b></div>
         <div class="kv"><span>Прострочено</span><b class="{{ 'text-danger' if dash.overdue }}">{{ dash.overdue }}</b></div>
         <div class="kv"><span>Укладено угод</span><b>{{ r.deals }}</b></div>
-        <div class="kv"><span>Відкриті угоди</span><b>{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</b></div>
+        <div class="kv"><span>Угоди в роботі</span><b>{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</b></div>
         {% if dash.forecast is not none and phase == 'planned' %}
         <div class="kv"><span>Прогноз P</span><b>{{ dash.forecast|money(cur) }}</b></div>
         {% endif %}

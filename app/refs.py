@@ -20,6 +20,7 @@ PERMISSIONS = {
     "lead_edit": {"rep", "manager"},
     "followup": {"manager"},                  # черга і фолоу-апи
     "deal": {"manager", "head"},
+    "deals_view": {"manager", "head", "marketer"},
     "queue": {"manager", "head"},
     "analytics": {"head", "marketer"},        # дошка і звіт
     "export": {"head", "marketer", "manager"},
@@ -36,7 +37,8 @@ PERMISSION_LABELS = {
     "lead_capture": "Фіксація розмови на заході",
     "lead_edit": "Редагування картки ліда",
     "followup": "Реєстрація фолоу-апів",
-    "deal": "Реєстрація угод",
+    "deal": "Реєстрація угод і зміна етапу",
+    "deals_view": "Дошка угод",
     "queue": "Черга дій",
     "analytics": "Аналітична дошка і звіт про подію",
     "export": "Вивантаження лідів у CSV",
@@ -133,10 +135,13 @@ FOLLOWUP_RESULTS = {
 FOLLOWUP_RETRY_DAYS = {"no_answer": 3, "talking": 7, "meeting_set": 7, "agreement": 7}
 
 DEAL_STAGES = {
-    "open": ("Відкрита", "info"),
+    "negotiation": ("Переговори", "info"),
+    "proposal": ("Пропозицію надіслано", "primary"),
     "won": ("Укладена", "success"),
     "lost": ("Втрачена", "secondary"),
 }
+
+DEAL_OPEN = ("negotiation", "proposal")
 
 REVENUE_TYPES = {
     "new": "Новий лід",

@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Угоди{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-0">Угоди</h1>
+    <div class="text-body-secondary small">Ліди, що стали угодами, за етапами.{% if can('deal') %} Картку можна перетягнути в іншу колонку.{% endif %}</div>
+  </div>
+  <form method="get">
+    <select class="form-select form-select-sm w-auto" name="event" onchange="this.form.submit()" aria-label="Подія">
+      <option value="">Усі події</option>
+      {% for e in events %}<option value="{{ e.id }}" {{ 'selected' if event_id == e.id }}>{{ e.name }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="deal-board" data-can-move="{{ 1 if can('deal') else 0 }}">
+  {% for stage, (label, tone) in refs.DEAL_STAGES.items() %}
+  <section class="deal-col deal-col-{{ stage }}" data-stage="{{ stage }}">
+    <header class="deal-col-head">
+      <span><span class="dot dot-{{ tone }}"></span> {{ label }} <span class="text-body-secondary">· {{ columns[stage]|length }}</span></span>
+      <b>{{ totals[stage]|money }}</b>
+    </header>
+    <div class="deal-cards">
+      {% for d in columns[stage] %}
+      <article class="deal-card" draggable="{{ 'true' if can('deal') else 'false' }}" data-id="{{ d.id }}">
+        <div class="d-flex justify-content-between gap-2">
+          <a class="fw-semibold text-decoration-none text-truncate" href="{{ url_for('leads.detail', lead_id=d.lead_id) }}">{{ d.full_name }}</a>
+          <b class="text-nowrap">{{ d.amount|money(d.currency) }}</b>
+        </div>
+        <div class="small text-body-secondary text-truncate">{{ d.company or '' }}</div>
+        <div class="d-flex flex-wrap gap-1 mt-2 align-items-center">
+          <span class="badge rounded-pill text-bg-light border"><i class="bi bi-calendar-event"></i> {{ d.event_name }}</span>
+          <span class="badge rounded-pill {{ 'text-bg-success-subtle text-success-emphasis' if d.revenue_type == 'new' else 'text-bg-info-subtle text-info-emphasis' }}">{{ refs.REVENUE_TYPES[d.revenue_type] }}</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2 small text-body-secondary">
+          <span>{% if d.owner_name %}<i class="bi bi-person"></i> {{ d.owner_name }}{% endif %}</span>
+          <span>{{ d.close_date|d if d.close_date else '' }}</span>
+        </div>
+        {% if can('deal') %}
+        <form method="post" action="{{ url_for('leads.move_deal', deal_id=d.id) }}" class="deal-move mt-2">
+          {{ m.csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}">
+          <select class="form-select form-select-sm" name="stage" onchange="this.form.submit()" aria-label="Етап">
+            {% for k, (l, t) in refs.DEAL_STAGES.items() %}<option value="{{ k }}" {{ 'selected' if k == stage }}>{{ 'Етап: ' if k == stage }}{{ l }}</option>{% endfor %}
+          </select>
+        </form>
+        {% endif %}
+      </article>
+      {% else %}
+      <div class="deal-empty">Порожньо</div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+</div>
+<p class="small text-body-secondary mt-3 mb-0">Укладені угоди автоматично входять у дохід і окупність своєї конференції. Нова угода реєструється в картці ліда.</p>
+{% endblock %}
+{% block scripts %}
+<script>
+// Перетягування картки в іншу колонку змінює етап угоди
+(function () {
+  var board = document.querySelector('.deal-board');
+  if (!board || board.dataset.canMove !== '1') return;
+  var dragged = null;
+  board.addEventListener('dragstart', function (e) {
+    dragged = e.target.closest('.deal-card');
+    if (dragged) { dragged.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; }
+  });
+  board.addEventListener('dragend', function () {
+    if (dragged) dragged.classList.remove('dragging');
+    board.querySelectorAll('.drop-target').forEach(function (c) { c.classList.remove('drop-target'); });
+  });
+  board.querySelectorAll('.deal-col').forEach(function (col) {
+    col.addEventListener('dragover', function (e) { e.preventDefault(); col.classList.add('drop-target'); });
+    col.addEventListener('dragleave', function () { col.classList.remove('drop-target'); });
+    col.addEventListener('drop', function (e) {
+      e.preventDefault();
+      if (!dragged) return;
+      var select = dragged.querySelector('select[name=stage]');
+      if (select.value === col.dataset.stage) return;
+      select.value = col.dataset.stage;
+      select.form.submit();
+    });
+  });
+})();
+</script>
+{% endblock %}

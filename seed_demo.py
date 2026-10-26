@@ -203,11 +203,11 @@ def seed():
         lead_ids.sort(key=lambda x: (-x[1], x[0]))
         pos = 0
         deal_specs = ev["deals"] + [("lost", "new", rnd.choice([12000, 20000, 9000])) for _ in range(ev["lost"])] \
-            + [("open", "new", rnd.choice([15000, 24000, 30000])) for _ in range(ev["open"])]
+            + [(rnd.choice(["negotiation", "proposal"]), "new", rnd.choice([15000, 24000, 30000])) for _ in range(ev["open"])]
         for stage, rtype, amount in deal_specs:
             lid, _, day = lead_ids[pos]
             pos += 1
-            close = (day + timedelta(days=rnd.randint(25, 70))).isoformat() if stage != "open" else None
+            close = (day + timedelta(days=rnd.randint(25, 70))).isoformat() if stage in ("won", "lost") else None
             db.execute("INSERT INTO deals (lead_id, amount, stage, revenue_type, close_date) VALUES (?, ?, ?, ?, ?)",
                        (lid, amount, stage, rtype, close))
             add_followups(db, lid, day, rnd.randint(2, 3), managers, final="agreement")

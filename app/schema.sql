@@ -128,7 +128,7 @@ CREATE TABLE IF NOT EXISTS deals (
     id           INTEGER PRIMARY KEY,
     lead_id      INTEGER NOT NULL UNIQUE REFERENCES leads(id) ON DELETE CASCADE,
     amount       REAL    NOT NULL CHECK (amount >= 0),
-    stage        TEXT    NOT NULL CHECK (stage IN ('open', 'won', 'lost')),
+    stage        TEXT    NOT NULL CHECK (stage IN ('negotiation', 'proposal', 'won', 'lost')),
     revenue_type TEXT    NOT NULL CHECK (revenue_type IN ('new', 'accelerated')),
     close_date   DATE
 );

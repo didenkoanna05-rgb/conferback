@@ -145,7 +145,7 @@ def dashboard(event, today=None):
         "AND due_date < ?", (eid, today_iso), one=True)["n"]
     open_deals = query(
         "SELECT COUNT(*) AS n, COALESCE(SUM(d.amount), 0) AS s FROM deals d JOIN leads l ON l.id = d.lead_id "
-        "WHERE l.event_id = ? AND d.stage = 'open'", (eid,), one=True)
+        "WHERE l.event_id = ? AND d.stage IN ('negotiation', 'proposal')", (eid,), one=True)
 
     roi = roi_summary(eid)
     return {

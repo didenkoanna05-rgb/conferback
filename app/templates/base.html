@@ -30,6 +30,9 @@
         {% if can('queue') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'leads.queue' %}active{% endif %}" href="{{ url_for('leads.queue') }}"><i class="bi bi-list-check"></i> Черга дій</a></li>
         {% endif %}
+        {% if can('deals_view') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'leads.deals' %}active{% endif %}" href="{{ url_for('leads.deals') }}"><i class="bi bi-briefcase"></i> Угоди</a></li>
+        {% endif %}
         {% if can('analytics') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'analytics.overview' %}active{% endif %}" href="{{ url_for('analytics.overview') }}"><i class="bi bi-bar-chart-line"></i> Статистика</a></li>
         {% endif %}

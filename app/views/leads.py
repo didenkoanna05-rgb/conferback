@@ -325,6 +325,18 @@ def add_followup(lead_id):
                     else url_for("leads.detail", lead_id=lead_id))
 
 
+def sync_lead_with_deal(db, lead, stage):
+    """Стан ліда йде за етапом угоди: укладена — «Угода», втрачена — «Закрито без угоди»."""
+    if stage == "won":
+        db.execute("UPDATE leads SET status = 'won', due_date = NULL WHERE id = ?", (lead["id"],))
+    elif stage == "lost":
+        db.execute("UPDATE leads SET status = 'closed', due_date = NULL WHERE id = ?", (lead["id"],))
+    elif lead["status"] != "in_progress" or not lead["due_date"]:
+        # Угода ще в роботі: лід лишається в черзі дій
+        db.execute("UPDATE leads SET status = 'in_progress', due_date = COALESCE(due_date, ?) WHERE id = ?",
+                   ((date.today() + timedelta(days=7)).isoformat(), lead["id"]))
+
+
 @bp.route("/leads/<int:lead_id>/deal", methods=["POST"])
 @require("deal")
 def save_deal(lead_id):
@@ -345,13 +357,7 @@ def save_deal(lead_id):
         "ON CONFLICT (lead_id) DO UPDATE SET amount = excluded.amount, stage = excluded.stage, "
         "revenue_type = excluded.revenue_type, close_date = excluded.close_date",
         (lead_id, amount, stage, rtype, close.isoformat() if close else None))
-    if stage == "won":
-        db.execute("UPDATE leads SET status = 'won', due_date = NULL WHERE id = ?", (lead_id,))
-    elif stage == "lost":
-        db.execute("UPDATE leads SET status = 'closed', due_date = NULL WHERE id = ?", (lead_id,))
-    elif lead["status"] in ("won", "closed", "new", "no_action"):
-        db.execute("UPDATE leads SET status = 'in_progress', due_date = COALESCE(due_date, ?) WHERE id = ?",
-                   ((date.today() + timedelta(days=7)).isoformat(), lead_id))
+    sync_lead_with_deal(db, lead, stage)
     db.commit()
     flash("Угоду збережено.", "success")
     return redirect(url_for("leads.detail", lead_id=lead_id))
@@ -379,3 +385,42 @@ def queue():
                    "WHERE l.status IN ('new', 'in_progress') ORDER BY e.start_date DESC")
     return render_template("leads/queue.html", groups=groups, mine=mine, event_id=event_id, events=events,
                            can_followup=can("followup"))
+
+
+@bp.route("/deals")
+@require("deals_view")
+def deals():
+    """Дошка угод за етапами з усіх подій."""
+    event_id = parse_int(request.args.get("event"), 1, 10**12)
+    sql = ("SELECT d.*, l.full_name, l.company, l.channel, l.id AS lead_id, l.owner_id, e.name AS event_name, "
+           "e.currency, u.full_name AS owner_name FROM deals d JOIN leads l ON l.id = d.lead_id "
+           "JOIN events e ON e.id = l.event_id LEFT JOIN users u ON u.id = l.owner_id")
+    args = []
+    if event_id:
+        sql += " WHERE l.event_id = ?"
+        args.append(event_id)
+    rows = query(sql + " ORDER BY COALESCE(d.close_date, '9999') DESC, d.amount DESC", args)
+    columns = {k: [r for r in rows if r["stage"] == k] for k in refs.DEAL_STAGES}
+    totals = {k: sum(r["amount"] for r in v) for k, v in columns.items()}
+    events = query("SELECT DISTINCT e.id, e.name FROM events e JOIN leads l ON l.event_id = e.id "
+                   "JOIN deals d ON d.lead_id = l.id ORDER BY e.start_date DESC")
+    return render_template("leads/deals.html", columns=columns, totals=totals, events=events, event_id=event_id)
+
+
+@bp.route("/deals/<int:deal_id>/stage", methods=["POST"])
+@require("deal")
+def move_deal(deal_id):
+    deal = query("SELECT * FROM deals WHERE id = ?", (deal_id,), one=True)
+    stage = request.form.get("stage")
+    if deal is None or stage not in refs.DEAL_STAGES:
+        abort(404)
+    lead = _get_lead(deal["lead_id"])
+    close = date.today().isoformat() if stage in ("won", "lost") else None
+    db = get_db()
+    db.execute("UPDATE deals SET stage = ?, close_date = CASE WHEN ? IS NULL THEN NULL ELSE COALESCE(close_date, ?) END "
+               "WHERE id = ?", (stage, close, close, deal_id))
+    sync_lead_with_deal(db, lead, stage)
+    db.commit()
+    flash(f"Угода з {lead['full_name']}: {refs.DEAL_STAGES[stage][0].lower()}.", "success")
+    back = request.form.get("back") or url_for("leads.deals")
+    return redirect(back if back.startswith("/") and not back.startswith("//") else url_for("leads.deals"))
