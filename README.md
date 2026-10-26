@@ -32,3 +32,9 @@ flask --app wsgi create-user anna "Анна Діденко" --roles head,markete
 - `app/views/` — сторінки: події, цільовий список, ліди й черга, аналітика, довідники
 - `app/static/js/capture.js`, `app/static/sw.js` — робота без мережі
 - `tests/` — автоматичні тести
+
+## Тести
+```bash
+pip install pytest
+python -m pytest -q
+```
