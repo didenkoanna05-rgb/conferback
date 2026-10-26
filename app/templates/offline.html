@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Немає зв'язку{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <i class="bi bi-wifi-off display-4 text-body-tertiary"></i>
+  <h1 class="h4 mt-3">Немає з'єднання з інтернетом</h1>
+  <p class="text-body-secondary">Ця сторінка ще не відкривалася на пристрої, тому її немає в пам'яті.<br>
+    Форма запису розмови працює без мережі, якщо ви відкривали її раніше.</p>
+  <button class="btn btn-primary" onclick="location.reload()">Спробувати ще раз</button>
+</div>
+{% endblock %}

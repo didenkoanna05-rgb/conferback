@@ -1,0 +1,134 @@
+/* ConferBack — власні стилі поверх Bootstrap 5 */
+:root {
+  --cb-navy: #1f3a5f;
+  --cb-accent: #f26b3a;
+  --cb-accent-dark: #d9562a;
+  --bs-primary: #2b5c9a;
+  --bs-primary-rgb: 43, 92, 154;
+  --bs-link-color: #2b5c9a;
+  --bs-link-color-rgb: 43, 92, 154;
+  --bs-body-bg: #f5f7fa;
+  --bs-teal: #14a39a;
+}
+body { -webkit-tap-highlight-color: transparent; }
+.min-w-0 { min-width: 0; }
+
+.btn-primary { --bs-btn-bg: #2b5c9a; --bs-btn-border-color: #2b5c9a; --bs-btn-hover-bg: #234c80; --bs-btn-hover-border-color: #234c80; --bs-btn-active-bg: #1f4472; }
+.btn-outline-primary { --bs-btn-color: #2b5c9a; --bs-btn-border-color: #2b5c9a; --bs-btn-hover-bg: #2b5c9a; --bs-btn-hover-border-color: #2b5c9a; --bs-btn-active-bg: #2b5c9a; --bs-btn-active-border-color: #2b5c9a; }
+.btn-accent { --bs-btn-color: #fff; --bs-btn-bg: var(--cb-accent); --bs-btn-border-color: var(--cb-accent); --bs-btn-hover-color: #fff; --bs-btn-hover-bg: var(--cb-accent-dark); --bs-btn-hover-border-color: var(--cb-accent-dark); --bs-btn-active-bg: var(--cb-accent-dark); --bs-btn-active-color: #fff; font-weight: 600; }
+.text-bg-teal { background: var(--bs-teal) !important; color: #fff !important; }
+
+.app-nav { background: var(--cb-navy); }
+.app-nav .navbar-brand { font-weight: 400; letter-spacing: .01em; }
+.app-nav .nav-link { color: rgba(255,255,255,.8); }
+.app-nav .nav-link.active, .app-nav .nav-link:hover { color: #fff; }
+.nav-user { color: rgba(255,255,255,.9); font-size: .9rem; }
+
+.card { border-color: #e3e8ef; border-radius: .75rem; }
+.card-header { background: #fff; border-bottom-color: #eef1f5; }
+
+/* Картки подій */
+.event-card { color: inherit; transition: box-shadow .15s, transform .15s; }
+.event-card:hover { box-shadow: 0 .5rem 1.5rem rgba(31,58,95,.12); transform: translateY(-2px); }
+.mini-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: .5rem; }
+.mini-stats span { display: block; font-size: .75rem; color: var(--bs-secondary-color); }
+.mini-stats b { font-size: .95rem; white-space: nowrap; }
+
+/* Показники */
+.stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: .75rem; }
+.stat { background: #fff; border: 1px solid #e3e8ef; border-radius: .75rem; padding: .75rem 1rem; border-left: 4px solid #cfd8e3; }
+.stat-label { font-size: .78rem; color: var(--bs-secondary-color); }
+.stat-value { font-size: 1.35rem; font-weight: 600; line-height: 1.3; }
+.stat-hint { font-size: .78rem; color: var(--bs-secondary-color); }
+.stat-success { border-left-color: var(--bs-success); }
+.stat-warning { border-left-color: var(--bs-warning); }
+.stat-danger { border-left-color: var(--bs-danger); }
+.stat-primary { border-left-color: var(--bs-primary); }
+.stat-danger .stat-value { color: var(--bs-danger); }
+
+.event-tabs { border-bottom: 1px solid #dfe5ec; white-space: nowrap; }
+.event-tabs .nav-link { color: var(--bs-secondary-color); }
+.event-tabs .nav-link.active { color: var(--bs-primary); }
+.goal { background: #fff; border-left: 4px solid var(--cb-accent); }
+
+/* Оцінка доцільності */
+.criterion { padding: .6rem 0; border-bottom: 1px dashed #e3e8ef; }
+.score-scale { display: grid; grid-template-columns: repeat(6, 1fr); gap: .25rem; }
+.score-scale .btn { padding: .3rem 0; }
+.score-result { background: #f2f5f9; }
+
+/* Стани */
+.status-chips, .chip-select { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chip { display: inline-flex; align-items: center; gap: .35rem; padding: .3rem .7rem; border-radius: 999px; border: 1px solid #d4dce6; background: #fff; color: inherit; text-decoration: none; font-size: .85rem; }
+.chip b { font-weight: 600; }
+.chip.active, .chip:hover { border-color: var(--bs-primary); color: var(--bs-primary); }
+.chip.active { background: rgba(43,92,154,.08); }
+.status-select { min-width: 12rem; font-weight: 500; }
+.status-success { background-color: #e8f6ee; }
+.status-primary { background-color: #e9f0f9; }
+.status-info { background-color: #e7f6fb; }
+.status-teal { background-color: #e5f6f5; }
+.status-dark, .status-light { background-color: #f1f1f3; }
+
+/* Ліди */
+.intent { display: inline-flex; align-items: center; gap: .2rem; font-size: .8rem; padding: .15rem .55rem; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+.intent-3 { background: #fde6df; color: #c2410c; }
+.intent-2 { background: #fff3cd; color: #92600a; }
+.intent-1 { background: #e7edf3; color: #51606f; }
+.intent-fixed { min-width: 5.5rem; justify-content: center; }
+.dots i { font-size: .65rem; color: var(--bs-primary); margin-right: 1px; }
+.details-note { background: #f7f9fb; border-left: 3px solid #cfd8e3; padding: .6rem .8rem; white-space: pre-line; border-radius: .25rem; }
+.small-dl dt { font-weight: 500; color: var(--bs-secondary-color); }
+.text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.queue-overdue { border-left: 4px solid var(--bs-danger); }
+.queue-today { border-left: 4px solid var(--bs-warning); }
+
+/* Форма фіксації розмови */
+.capture-page main { padding-bottom: 6rem !important; }
+.cap-section { background: #fff; border: 1px solid #e3e8ef; border-radius: .75rem; padding: 1rem; margin-bottom: .75rem; }
+.level-buttons { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; }
+.level-buttons .btn { padding: .7rem .25rem; font-weight: 600; }
+.btn-outline-intent-1 { --bs-btn-color: #51606f; --bs-btn-border-color: #b8c4d0; --bs-btn-active-bg: #51606f; --bs-btn-active-color: #fff; --bs-btn-hover-bg: #e7edf3; }
+.btn-outline-intent-2 { --bs-btn-color: #92600a; --bs-btn-border-color: #e9c46a; --bs-btn-active-bg: #e0a526; --bs-btn-active-color: #fff; --bs-btn-hover-bg: #fff3cd; }
+.btn-outline-intent-3 { --bs-btn-color: #c2410c; --bs-btn-border-color: #f2a487; --bs-btn-active-bg: #e8572a; --bs-btn-active-color: #fff; --bs-btn-hover-bg: #fde6df; }
+.due-preview.ready { color: var(--bs-body-color) !important; font-weight: 500; }
+.capture-submit { position: sticky; bottom: .75rem; z-index: 5; }
+#targetSelect option { padding: .35rem .25rem; }
+
+/* Аналітика */
+.stage-card .card-header { font-weight: 600; }
+.stage-num { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 50%; background: var(--cb-navy); color: #fff; font-size: .85rem; margin-right: .35rem; }
+.big-num { font-size: 2rem; font-weight: 600; line-height: 1.1; }
+.big-num small { font-size: .85rem; font-weight: 400; color: var(--bs-secondary-color); }
+.funnel-row + .funnel-row { margin-top: .5rem; }
+.kv { display: flex; justify-content: space-between; gap: .5rem; padding: .3rem 0; border-bottom: 1px dashed #edf0f4; font-size: .9rem; }
+.kv b { white-space: nowrap; }
+.split-bar { display: flex; height: .6rem; border-radius: .3rem; overflow: hidden; background: #e9ecef; }
+.roi-hero { background: #f2f5f9; border-left: 5px solid #cfd8e3; }
+.roi-success { border-left-color: var(--bs-success); background: #eef8f2; }
+.roi-danger { border-left-color: var(--bs-danger); background: #fdf0f0; }
+.roi-warning { border-left-color: var(--bs-warning); background: #fff8e6; }
+.roi-primary { border-left-color: var(--bs-primary); background: #edf3fa; }
+.formula { font-family: Georgia, "Times New Roman", serif; font-size: 1.05rem; }
+.roles-table td:first-child { min-width: 14rem; }
+
+/* Мережа */
+.net-status { position: sticky; top: 0; z-index: 1030; text-align: center; font-size: .9rem; padding: .45rem 1rem; background: #fff3cd; color: #664d03; border-bottom: 1px solid #ffe69c; }
+.fab { position: fixed; right: 1rem; bottom: 1rem; width: 3.5rem; height: 3.5rem; border-radius: 50%; display: grid; place-items: center; font-size: 1.5rem; z-index: 1020; }
+
+.login-page { background: linear-gradient(160deg, #e9eff7 0%, #f5f7fa 60%); min-height: 100vh; }
+
+@media (max-width: 575.98px) {
+  h1.h3 { font-size: 1.35rem; }
+  .stat-value { font-size: 1.15rem; }
+  .status-select { min-width: 100%; }
+  .status-form { width: 100%; }
+}
+
+@media print {
+  .app-nav, .fab, .net-status, .alert { display: none !important; }
+  body { background: #fff; }
+  .report { border: 0; }
+  main { padding: 0 !important; }
+  a { color: inherit; text-decoration: none; }
+}

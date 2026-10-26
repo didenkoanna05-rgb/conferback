@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Ліди · {{ event.name }}{% endblock %}
+{% block content %}
+{{ m.event_header(event, phase, tab) }}
+
+<form class="row g-2 mb-3" method="get">
+  <div class="col-12 col-md-4"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Пошук за ім'ям чи компанією"></div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="intent" onchange="this.form.submit()" aria-label="Зацікавленість">
+      <option value="">Будь-яка зацікавленість</option>
+      {% for v in (3, 2, 1) %}<option value="{{ v }}" {{ 'selected' if intent == v }}>{{ refs.INTENT_LABELS[v] }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="status" onchange="this.form.submit()" aria-label="Стан">
+      <option value="">Усі стани</option>
+      {% for k, (label, tone) in refs.LEAD_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if status == k }}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-12 col-md-2 d-flex gap-2">
+    <button class="btn btn-outline-primary flex-grow-1">Знайти</button>
+    {% if can('export') %}
+    <a class="btn btn-outline-success" href="{{ url_for('analytics.export_csv', event_id=event.id) }}" title="Вивантажити в CSV для CRM"><i class="bi bi-filetype-csv"></i></a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="small text-body-secondary mb-2">Знайдено: {{ leads|length }}</div>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0 leads-table">
+      <thead>
+        <tr><th>Співрозмовник</th><th>Профіль</th><th>Зацікавленість</th><th class="d-none d-md-table-cell">Наступний крок</th><th class="d-none d-lg-table-cell">Відповідальний</th><th>Фолоу-ап</th><th>Стан</th></tr>
+      </thead>
+      <tbody>
+      {% for l in leads %}
+        <tr>
+          <td>
+            <a class="fw-semibold text-decoration-none" href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ l.full_name }}</a>
+            {% if l.target_id %}<i class="bi bi-person-check text-success" title="З цільового списку"></i>{% endif %}
+            <div class="small text-body-secondary">{{ l.company or '' }}</div>
+          </td>
+          <td>{{ m.level_dots(l.icp_fit, 'Відповідність профілю') }}</td>
+          <td>{{ m.intent_badge(l.intent) }}</td>
+          <td class="d-none d-md-table-cell small">{{ l.next_step or '—' }}</td>
+          <td class="d-none d-lg-table-cell small">{{ l.owner_name or '—' }}</td>
+          <td class="small text-nowrap">{{ l.due_date|d if l.due_date else '—' }}</td>
+          <td>{{ m.badge(refs.LEAD_STATUSES[l.status]) }}{% if l.deal_stage %}<div class="small text-nowrap mt-1">{{ l.deal_amount|money(event.currency) }}</div>{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="7" class="text-center text-body-secondary py-5">Лідів не знайдено</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

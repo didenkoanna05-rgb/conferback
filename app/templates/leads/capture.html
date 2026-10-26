@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Розмова · {{ event.name }}{% endblock %}
+{% block body_class %}capture-page{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-12 col-md-9 col-lg-7 col-xl-6">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <div class="min-w-0">
+      <div class="small text-body-secondary">Запис розмови</div>
+      <h1 class="h5 mb-0 text-truncate">{{ event.name }}</h1>
+    </div>
+    <span id="pendingBadge" class="badge rounded-pill text-bg-warning d-none" title="Записи, що чекають надсилання">
+      <i class="bi bi-cloud-arrow-up"></i> <span id="pendingCount">0</span>
+    </span>
+  </div>
+
+  <div id="captureToast" class="alert d-none py-2" role="status"></div>
+
+  <form method="post" id="captureForm" class="capture-form" novalidate autocomplete="off"
+        data-event="{{ event.id }}" data-sync-url="{{ url_for('leads.api_sync') }}"
+        data-csrf="{{ csrf_token() }}" data-delays='{{ delays|tojson }}'>
+    {{ m.csrf() }}
+
+    <section class="cap-section">
+      <div class="btn-group w-100 mb-2" role="group" aria-label="Хто це">
+        <input type="radio" class="btn-check" name="who" id="whoTarget" value="target" {{ 'checked' if targets else 'disabled' }}>
+        <label class="btn btn-outline-primary" for="whoTarget"><i class="bi bi-person-check"></i> Зі списку ({{ targets|length }})</label>
+        <input type="radio" class="btn-check" name="who" id="whoNew" value="new" {{ 'checked' if not targets }}>
+        <label class="btn btn-outline-primary" for="whoNew"><i class="bi bi-person-plus"></i> Спонтанна розмова</label>
+      </div>
+      <div id="targetPick" class="{{ 'd-none' if not targets }}">
+        <input type="search" class="form-control mb-2" id="targetSearch" placeholder="Пошук за ім'ям чи компанією">
+        <select class="form-select" name="target_id" id="targetSelect" size="5" aria-label="Контакт зі списку">
+          {% for t in targets %}
+          <option value="{{ t.id }}" data-name="{{ t.full_name }}" data-company="{{ t.company }}" data-position="{{ t.position or '' }}">
+            {{ '★ ' if t.status == 'meeting' }}{{ t.full_name }} — {{ t.company }}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="form-text">★ — зустріч домовлено заздалегідь</div>
+      </div>
+    </section>
+
+    <section class="cap-section">
+      <div class="row g-2">
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="full_name">Ім'я *</label>
+          <input class="form-control form-control-lg" id="full_name" name="full_name" required maxlength="200" autocomplete="off">
+        </div>
+        <div class="col-12 col-sm-6">
+          <label class="form-label" for="company">Компанія</label>
+          <input class="form-control form-control-lg" id="company" name="company" maxlength="200">
+        </div>
+      </div>
+      <details class="mt-2">
+        <summary class="small text-primary">Посада і контакти</summary>
+        <div class="row g-2 mt-1">
+          <div class="col-12"><input class="form-control" name="position" id="position" placeholder="Посада" maxlength="200"></div>
+          <div class="col-12 col-sm-6"><input class="form-control" type="email" name="email" placeholder="E-mail" inputmode="email"></div>
+          <div class="col-12 col-sm-6"><input class="form-control" type="tel" name="phone" placeholder="Телефон" inputmode="tel"></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="cap-section">
+      <div class="form-label">Відповідність профілю клієнта</div>
+      <div class="level-buttons" role="radiogroup" aria-label="Відповідність профілю">
+        {% for v in (1, 2, 3) %}
+        <input type="radio" class="btn-check" name="icp_fit" id="icp{{ v }}" value="{{ v }}">
+        <label class="btn btn-outline-secondary" for="icp{{ v }}">{{ refs.LEVELS[v] }}</label>
+        {% endfor %}
+      </div>
+      <div class="form-label mt-3">Зацікавленість *</div>
+      <div class="level-buttons intent-buttons" role="radiogroup" aria-label="Зацікавленість">
+        {% for v in (1, 2, 3) %}
+        <input type="radio" class="btn-check" name="intent" id="intent{{ v }}" value="{{ v }}" required>
+        <label class="btn btn-outline-intent-{{ v }}" for="intent{{ v }}"><i class="bi bi-fire"></i> {{ refs.INTENT_LABELS[v] }}</label>
+        {% endfor %}
+      </div>
+      <div id="duePreview" class="due-preview small mt-2 text-body-secondary">Оберіть зацікавленість — система визначить дату фолоу-апу.</div>
+    </section>
+
+    <section class="cap-section">
+      <label class="form-label" for="need_topic">Тема потреби</label>
+      <div class="chip-select mb-2" data-target="need_topic">
+        {% for topic in refs.NEED_TOPICS %}<button type="button" class="chip">{{ topic }}</button>{% endfor %}
+      </div>
+      <input class="form-control" id="need_topic" name="need_topic" maxlength="200" placeholder="або впишіть свою">
+      <label class="form-label mt-3" for="details">Що важливо з розмови</label>
+      <textarea class="form-control" id="details" name="details" rows="3" maxlength="3000" placeholder="Бюджет, терміни, з ким ще говорити…"></textarea>
+    </section>
+
+    <section class="cap-section">
+      <label class="form-label" for="next_step">Наступний крок</label>
+      <div class="chip-select mb-2" data-target="next_step">
+        {% for step in refs.NEXT_STEPS %}<button type="button" class="chip">{{ step }}</button>{% endfor %}
+      </div>
+      <input class="form-control" id="next_step" name="next_step" maxlength="200" placeholder="або впишіть свій">
+      <label class="form-label mt-3" for="owner_id">Відповідальний менеджер</label>
+      <select class="form-select" id="owner_id" name="owner_id">
+        <option value="">—</option>
+        {% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if current_user.id == u.id }}>{{ u.full_name }}</option>{% endfor %}
+      </select>
+      <div class="form-check mt-3">
+        <input class="form-check-input" type="checkbox" name="no_prospect" value="1" id="no_prospect">
+        <label class="form-check-label" for="no_prospect">Неперспективний — без фолоу-апу</label>
+      </div>
+    </section>
+
+    <div class="capture-submit">
+      <button class="btn btn-accent btn-lg w-100" id="captureBtn"><i class="bi bi-check2-circle"></i> Зберегти розмову</button>
+    </div>
+  </form>
+
+  {% if recent %}
+  <h2 class="h6 mt-4 text-body-secondary">Мої останні записи на цій події</h2>
+  <div class="list-group mb-4">
+    {% for l in recent %}
+    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" href="{{ url_for('leads.detail', lead_id=l.id) }}">
+      <span class="min-w-0 text-truncate">{{ l.full_name }}{% if l.company %} <span class="text-body-secondary">· {{ l.company }}</span>{% endif %}</span>
+      {{ m.intent_badge(l.intent) }}
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/capture.js') }}"></script>
+{% endblock %}

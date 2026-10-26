@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Користувачі{% endblock %}
+{% block content %}
+<h1 class="h3">Користувачі</h1>
+<p class="text-body-secondary">Одна людина може мати кілька ролей. Права ролей описано на сторінці <a href="{{ url_for('auth.roles') }}">«Ролі»</a>.</p>
+<div class="card mb-3">
+  <ul class="list-group list-group-flush">
+  {% for u in users %}
+    <li class="list-group-item {{ 'opacity-50' if not u.is_active }}">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div><b>{{ u.full_name }}</b> <code class="ms-1">{{ u.username }}</code>{% if not u.is_active %} <span class="badge text-bg-secondary">вимкнено</span>{% endif %}</div>
+        <form method="post" action="{{ url_for('auth.user_update', uid=u.id) }}">
+          {{ m.csrf() }}<button class="btn btn-sm btn-outline-secondary" name="action" value="toggle">{{ 'Вимкнути' if u.is_active else 'Увімкнути' }}</button>
+        </form>
+      </div>
+      <form method="post" action="{{ url_for('auth.user_update', uid=u.id) }}" class="d-flex flex-wrap gap-3 align-items-center mt-2">
+        {{ m.csrf() }}
+        {% for key, label in refs.ROLES.items() %}
+        <div class="form-check form-check-inline m-0">
+          <input class="form-check-input" type="checkbox" name="roles" value="{{ key }}" id="r{{ u.id }}{{ key }}" {{ 'checked' if key in user_roles.get(u.id, ()) }}>
+          <label class="form-check-label small" for="r{{ u.id }}{{ key }}">{{ label }}</label>
+        </div>
+        {% endfor %}
+        <button class="btn btn-sm btn-outline-primary" name="action" value="roles">Зберегти ролі</button>
+      </form>
+      <form method="post" action="{{ url_for('auth.user_update', uid=u.id) }}" class="d-flex gap-2 mt-2">
+        {{ m.csrf() }}<input type="password" class="form-control form-control-sm w-auto" name="password" placeholder="Новий пароль" minlength="8" autocomplete="new-password">
+        <button class="btn btn-sm btn-outline-secondary" name="action" value="password">Змінити пароль</button>
+      </form>
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+<form method="post" class="card card-body">
+  {{ m.csrf() }}
+  <h2 class="h6">Новий користувач</h2>
+  <div class="row g-2">
+    <div class="col-12 col-md-4"><input class="form-control" name="full_name" placeholder="Ім'я та прізвище" required></div>
+    <div class="col-12 col-md-4"><input class="form-control" name="username" placeholder="Логін" required autocapitalize="none"></div>
+    <div class="col-12 col-md-4"><input class="form-control" type="password" name="password" placeholder="Пароль (від 8 символів)" minlength="8" required autocomplete="new-password"></div>
+    <div class="col-12 d-flex flex-wrap gap-3">
+      {% for key, label in refs.ROLES.items() %}
+      <div class="form-check"><input class="form-check-input" type="checkbox" name="roles" value="{{ key }}" id="nr{{ key }}"><label class="form-check-label" for="nr{{ key }}">{{ label }}</label></div>
+      {% endfor %}
+    </div>
+    <div class="col-12"><button class="btn btn-primary">Додати користувача</button></div>
+  </div>
+</form>
+{% endblock %}

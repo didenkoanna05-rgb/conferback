@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Черга дій{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+  <div>
+    <h1 class="h3 mb-0">Черга дій</h1>
+    <div class="text-body-secondary small">Кому і коли написати після події</div>
+  </div>
+  <form method="get" class="d-flex flex-wrap gap-2">
+    <select class="form-select form-select-sm w-auto" name="event" onchange="this.form.submit()" aria-label="Подія">
+      <option value="">Усі події</option>
+      {% for e in events %}<option value="{{ e.id }}" {{ 'selected' if event_id == e.id }}>{{ e.name }}</option>{% endfor %}
+    </select>
+    <div class="btn-group btn-group-sm" role="group">
+      <input type="radio" class="btn-check" name="mine" id="mine1" value="1" {{ 'checked' if mine }} onchange="this.form.submit()">
+      <label class="btn btn-outline-primary" for="mine1">Мої</label>
+      <input type="radio" class="btn-check" name="mine" id="mine0" value="0" {{ 'checked' if not mine }} onchange="this.form.submit()">
+      <label class="btn btn-outline-primary" for="mine0">Усі</label>
+    </div>
+  </form>
+</div>
+
+<div class="stats-row mb-3">
+  {{ m.stat('Прострочено', groups.overdue|length, '', 'danger' if groups.overdue else '') }}
+  {{ m.stat('На сьогодні', groups.today|length, today|d, 'warning' if groups.today else '') }}
+  {{ m.stat('Пізніше', groups.upcoming|length) }}
+</div>
+
+{% for key, title, icon, tone in [('overdue', 'Прострочені', 'exclamation-triangle', 'danger'), ('today', 'Сьогодні', 'sun', 'warning'), ('upcoming', 'Пізніше', 'calendar-week', 'secondary')] %}
+{% set items = groups[key] %}
+{% if items %}
+<h2 class="h6 mt-4 mb-2 text-{{ tone }}"><i class="bi bi-{{ icon }}"></i> {{ title }} · {{ items|length }}</h2>
+<div class="card queue-group queue-{{ key }}">
+  <ul class="list-group list-group-flush">
+  {% for l in items %}
+    <li class="list-group-item">
+      <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div class="min-w-0 flex-grow-1">
+          <a class="fw-semibold text-decoration-none" href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ l.full_name }}</a>
+          <span class="text-body-secondary">{{ ('· ' ~ l.company) if l.company }}</span>
+          <div class="small text-body-secondary text-truncate">
+            {{ l.event_name }}{% if l.next_step %} · <b class="text-body">{{ l.next_step }}</b>{% endif %}{% if l.owner_name and not mine %} · {{ l.owner_name }}{% endif %}
+          </div>
+          {% if l.details %}<div class="small mt-1 text-truncate-2">{{ l.details }}</div>{% endif %}
+        </div>
+        <div class="text-end">
+          {{ m.intent_badge(l.intent) }}
+          <div class="small mt-1 {{ 'text-danger fw-semibold' if key == 'overdue' else 'text-body-secondary' }}">{{ l.due_date|d }}</div>
+        </div>
+      </div>
+      {% if can_followup %}
+      <button class="btn btn-sm btn-outline-primary mt-2" data-bs-toggle="collapse" data-bs-target="#fu{{ l.id }}"><i class="bi bi-check2"></i> Результат фолоу-апу</button>
+      <div class="collapse" id="fu{{ l.id }}">
+        <form method="post" action="{{ url_for('leads.add_followup', lead_id=l.id) }}" class="row g-2 mt-1">
+          {{ m.csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}">
+          <div class="col-6 col-md-3"><select class="form-select form-select-sm" name="channel" aria-label="Канал">{% for k, v in refs.FOLLOWUP_CHANNELS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div class="col-6 col-md-3"><select class="form-select form-select-sm" name="result" aria-label="Результат">{% for k, v in refs.FOLLOWUP_RESULTS.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></div>
+          <div class="col-12 col-md-4"><input class="form-control form-control-sm" name="note" placeholder="Нотатка"></div>
+          <div class="col-12 col-md-2"><button class="btn btn-sm btn-primary w-100">Зберегти</button></div>
+        </form>
+      </div>
+      {% endif %}
+    </li>
+  {% endfor %}
+  </ul>
+</div>
+{% endif %}
+{% endfor %}
+
+{% if not (groups.overdue or groups.today or groups.upcoming) %}
+<div class="card card-body text-center py-5 text-body-secondary"><i class="bi bi-emoji-smile display-6"></i><div class="mt-2">Черга порожня. Усі ліди опрацьовано.</div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Дошка · {{ event.name }}{% endblock %}
+{% block content %}
+{{ m.event_header(event, phase, tab) }}
+{% set cur = event.currency %}
+{% set r = dash.roi %}
+
+<div class="row g-3">
+  <div class="col-12 col-lg-4">
+    <div class="card h-100 stage-card">
+      <div class="card-header"><span class="stage-num">1</span> До події: підготовка</div>
+      <div class="card-body">
+        <div class="big-num">{{ dash.targets_total }} <small>у цільовому списку</small></div>
+        <div class="funnel mt-3">
+          {% for label, value in [('Написали', dash.contacted), ('Відповіли', dash.responded), ('Будуть на події', dash.targets.confirmed + dash.targets.meeting), ('Зустріч домовлено', dash.meetings_set)] %}
+          <div class="funnel-row">
+            <div class="d-flex justify-content-between small"><span>{{ label }}</span><b>{{ value }}</b></div>
+            {{ m.bar(value, dash.targets_total, 'primary') }}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="kv mt-3"><span>Частка відповідей</span><b>{{ dash.reply_rate|pct }}</b></div>
+        <div class="kv"><span>Не відповіли / відмовились</span><b>{{ dash.targets.no_reply }} / {{ dash.targets.declined }}</b></div>
+        {% if dash.forecast is not none %}
+        <div class="kv"><span>Прогноз P = K·Ch·V − C</span><b class="text-{{ 'success' if dash.forecast > 0 else 'danger' }}">{{ dash.forecast|money(cur) }}</b></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card h-100 stage-card">
+      <div class="card-header"><span class="stage-num">2</span> На події: розмови</div>
+      <div class="card-body">
+        <div class="big-num">{{ dash.leads_total }} <small>розмов зафіксовано</small></div>
+        <div class="split-bar mt-3" title="Заплановані / спонтанні">
+          {% set pl = (100 * dash.planned / dash.leads_total) if dash.leads_total else 0 %}
+          <div class="bg-success" style="width: {{ pl }}%"></div><div class="bg-info" style="width: {{ 100 - pl if dash.leads_total else 0 }}%"></div>
+        </div>
+        <div class="d-flex justify-content-between small mt-1">
+          <span><i class="bi bi-square-fill text-success"></i> зі списку {{ dash.planned }}</span>
+          <span><i class="bi bi-square-fill text-info"></i> спонтанні {{ dash.spontaneous }}</span>
+        </div>
+        <div class="kv mt-3"><span>Кваліфікованих лідів</span><b>{{ dash.qualified }}</b></div>
+        <div class="kv"><span>Домовлених зустрічей відбулося</span><b>{{ dash.meetings_held }} з {{ dash.meetings_set }}</b></div>
+        <div class="mt-3 small text-body-secondary">За зацікавленістю</div>
+        {% for lvl in (3, 2, 1) %}
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <span class="intent intent-{{ lvl }} intent-fixed">{{ refs.INTENT_LABELS[lvl] }}</span>
+          <div class="flex-grow-1">{{ m.bar(dash.by_intent[lvl], dash.leads_total, ['', 'secondary', 'warning', 'danger'][lvl]) }}</div>
+          <b class="small">{{ dash.by_intent[lvl] }}</b>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-4">
+    <div class="card h-100 stage-card">
+      <div class="card-header"><span class="stage-num">3</span> Після події: результат</div>
+      <div class="card-body">
+        <div class="big-num">{{ r.roi|num }} <small>ROI</small></div>
+        <span class="badge text-bg-{{ r.tone }} text-wrap">{{ r.verdict }}</span>
+        <div class="kv mt-3"><span>Витрати</span><b>{{ r.cost|money(cur) }}</b></div>
+        <div class="kv"><span>Дохід від нових лідів</span><b>{{ r.revenue_new|money(cur) }}</b></div>
+        <div class="kv"><span>Дохід від прискорених угод</span><b>{{ r.revenue_accelerated|money(cur) }}</b></div>
+        <div class="kv"><span>Укладено угод</span><b>{{ r.deals }}</b></div>
+        <div class="kv"><span>Відкриті угоди</span><b>{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</b></div>
+        <div class="kv"><span>Вартість кваліфікованого ліда</span><b>{{ dash.cost_per_qualified|money(cur) }}</b></div>
+        <div class="kv"><span>Фолоу-апів / лідів охоплено</span><b>{{ dash.followups }} / {{ dash.followed_leads }}</b></div>
+        <div class="kv"><span>Прострочено в черзі</span><b class="{{ 'text-danger' if dash.overdue }}">{{ dash.overdue }}</b></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-3">
+  <div class="card-body d-flex flex-wrap gap-3 align-items-center">
+    <span class="fw-semibold">Стан лідів:</span>
+    {% for k, pair in refs.LEAD_STATUSES.items() %}
+    <span>{{ m.badge(pair) }} <b>{{ dash.by_status[k] }}</b></span>
+    {% endfor %}
+    {% if can('export') %}
+    <a class="btn btn-sm btn-outline-success ms-auto" href="{{ url_for('analytics.export_csv', event_id=event.id) }}"><i class="bi bi-filetype-csv"></i> Вивантажити ліди в CSV</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

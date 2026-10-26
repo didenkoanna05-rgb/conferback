@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1f3a5f">
+  <title>{% block title %}ConferBack{% endblock %} · ConferBack</title>
+  <link rel="manifest" href="{{ url_for('manifest') }}">
+  <link rel="icon" href="{{ url_for('static', filename='img/icon.svg') }}" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if current_user %}
+<nav class="navbar navbar-expand-lg navbar-dark app-nav sticky-top">
+  <div class="container-xl">
+    <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('events.index') }}">
+      <img src="{{ url_for('static', filename='img/icon.svg') }}" alt="" width="28" height="28">
+      <span>Confer<b>Back</b></span>
+    </a>
+    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Меню">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'events.index' %}active{% endif %}" href="{{ url_for('events.index') }}"><i class="bi bi-calendar-event"></i> Події</a></li>
+        {% if can('queue') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'leads.queue' %}active{% endif %}" href="{{ url_for('leads.queue') }}"><i class="bi bi-list-check"></i> Черга дій</a></li>
+        {% endif %}
+        {% if can('lead_capture') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint in ('events.capture_choose', 'leads.capture') %}active{% endif %}" href="{{ url_for('events.capture_choose') }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a></li>
+        {% endif %}
+        {% if can('settings') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'settings.index' %}active{% endif %}" href="{{ url_for('settings.index') }}"><i class="bi bi-sliders"></i> Довідники</a></li>
+        {% endif %}
+        {% if can('users') %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'auth.users' %}active{% endif %}" href="{{ url_for('auth.users') }}"><i class="bi bi-people"></i> Користувачі</a></li>
+        {% endif %}
+      </ul>
+      <div class="d-flex align-items-lg-center flex-column flex-lg-row gap-2 py-2 py-lg-0">
+        <a class="nav-user text-decoration-none" href="{{ url_for('auth.roles') }}" title="Мої ролі">
+          <i class="bi bi-person-circle"></i> {{ current_user.full_name }}
+          <small class="d-block d-lg-inline opacity-75">
+            {%- for r in refs.ROLES if r in current_user.roles %}{{ ' · ' if not loop.first else ' ' }}{{ refs.ROLES[r]|lower }}{% endfor -%}
+          </small>
+        </a>
+        <form method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-sm btn-outline-light"><i class="bi bi-box-arrow-right"></i> Вийти</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</nav>
+{% endif %}
+
+<div id="netStatus" class="net-status d-none" role="status"></div>
+
+<main class="container-xl py-3 py-md-4">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+      {{ msg }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Закрити"></button>
+    </div>
+    {% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+{% if current_user and can('lead_capture') and request.endpoint not in ('leads.capture', 'events.capture_choose') %}
+<a href="{{ url_for('events.capture_choose') }}" class="btn btn-accent fab d-lg-none shadow" aria-label="Записати розмову">
+  <i class="bi bi-plus-lg"></i>
+</a>
+{% endif %}
+
+<script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

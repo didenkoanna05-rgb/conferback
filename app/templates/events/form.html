@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Нова подія' if is_new else 'Редагування події' }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-8">
+    <a href="{{ url_for('events.index') if is_new else url_for('events.detail', event_id=event.id) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Назад</a>
+    <h1 class="h3 mt-1 mb-3">{{ 'Нова кампанія участі' if is_new else 'Редагування кампанії' }}</h1>
+    <form method="post" class="card card-body shadow-sm">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row g-3">
+        <div class="col-12">
+          <label class="form-label" for="name">Назва події *</label>
+          <input class="form-control" id="name" name="name" value="{{ event.name or '' }}" required maxlength="200" placeholder="Наприклад, Web Summit Lisbon 2026">
+        </div>
+        <div class="col-12 col-md-4">
+          <label class="form-label" for="city">Місто</label>
+          <input class="form-control" id="city" name="city" value="{{ event.city or '' }}" maxlength="100">
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="start_date">Початок *</label>
+          <input class="form-control" type="date" id="start_date" name="start_date" value="{{ event.start_date or '' }}" required>
+        </div>
+        <div class="col-6 col-md-4">
+          <label class="form-label" for="end_date">Кінець *</label>
+          <input class="form-control" type="date" id="end_date" name="end_date" value="{{ event.end_date or '' }}" required>
+        </div>
+        <div class="col-12">
+          <label class="form-label" for="goal">Мета участі</label>
+          <textarea class="form-control" id="goal" name="goal" rows="3" placeholder="Що компанія хоче отримати від цієї поїздки">{{ event.goal or '' }}</textarea>
+        </div>
+        <div class="col-12 col-md-6">
+          <span class="form-label d-block">Формат участі</span>
+          <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="has_booth" id="booth1" value="1" {{ 'checked' if event.has_booth }}>
+            <label class="btn btn-outline-primary" for="booth1"><i class="bi bi-shop"></i> Зі стендом</label>
+            <input type="radio" class="btn-check" name="has_booth" id="booth0" value="0" {{ 'checked' if not event.has_booth }}>
+            <label class="btn btn-outline-primary" for="booth0"><i class="bi bi-person-walking"></i> Без стенда</label>
+          </div>
+        </div>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="currency">Валюта кошторису</label>
+          <select class="form-select" id="currency" name="currency">
+            {% for code, sign in refs.CURRENCIES.items() %}
+            <option value="{{ code }}" {{ 'selected' if event.currency == code }}>{{ code }} ({{ sign }})</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <hr class="my-4">
+      <h2 class="h6 mb-1">Параметри прогнозу <span class="text-body-secondary fw-normal">(необов'язково)</span></h2>
+      <p class="small text-body-secondary">Потрібні для прогнозу результату до події за формулою P = K · Ch · V − C.</p>
+      <div class="row g-3">
+        <div class="col-6">
+          <label class="form-label" for="close_rate">Частка закриття угод, %</label>
+          <input class="form-control" id="close_rate" name="close_rate" inputmode="decimal"
+                 value="{{ (event.close_rate * 100)|round(1) if event.close_rate is not none else '' }}" placeholder="20">
+        </div>
+        <div class="col-6">
+          <label class="form-label" for="avg_deal">Середня вартість контракту</label>
+          <input class="form-control" id="avg_deal" name="avg_deal" inputmode="decimal" value="{{ event.avg_deal if event.avg_deal is not none else '' }}" placeholder="25000">
+        </div>
+      </div>
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn btn-primary">{{ 'Створити' if is_new else 'Зберегти' }}</button>
+        <a class="btn btn-outline-secondary" href="{{ url_for('events.index') if is_new else url_for('events.detail', event_id=event.id) }}">Скасувати</a>
+      </div>
+    </form>
+    {% if not is_new and can('event_delete') %}
+    <form method="post" action="{{ url_for('events.delete', event_id=event.id) }}" class="mt-3 text-end"
+          onsubmit="return confirm('Вилучити подію разом з кошторисом, списком, лідами й угодами? Це не можна скасувати.')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-link text-danger"><i class="bi bi-trash"></i> Вилучити подію</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

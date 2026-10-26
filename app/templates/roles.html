@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Ролі{% endblock %}
+{% block content %}
+<h1 class="h3">Ролі та права</h1>
+<p class="text-body-secondary">Ваші ролі: {% for r in refs.ROLES if r in current_user.roles %}<b>{{ refs.ROLES[r] }}</b>{{ ', ' if not loop.last }}{% endfor %}. Переглядати події та ліди можуть усі користувачі.</p>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0 roles-table">
+      <thead><tr><th>Дія</th>{% for key, label in refs.ROLES.items() %}<th class="text-center small">{{ label }}</th>{% endfor %}</tr></thead>
+      <tbody>
+      {% for perm, label in refs.PERMISSION_LABELS.items() %}
+        <tr><td>{{ label }}</td>
+        {% for key in refs.ROLES %}<td class="text-center">{% if key in refs.PERMISSIONS[perm] %}<i class="bi bi-check-lg text-success fs-5"></i>{% else %}<span class="text-body-tertiary">—</span>{% endif %}</td>{% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

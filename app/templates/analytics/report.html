@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Звіт · {{ event.name }}{% endblock %}
+{% block content %}
+<div class="d-print-none">{{ m.event_header(event, phase, tab) }}</div>
+{% set cur = event.currency %}
+{% set r = dash.roi %}
+
+<article class="report card">
+  <div class="card-body p-3 p-md-4">
+    <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+      <div>
+        <div class="small text-body-secondary text-uppercase">Звіт про участь у події</div>
+        <h2 class="h4 mb-1">{{ event.name }}</h2>
+        <div class="small text-body-secondary">{{ event.city }} · {{ event.start_date|d }}–{{ event.end_date|d }} · {{ 'зі стендом' if event.has_booth else 'без стенда' }} · сформовано {{ today|d }}</div>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm d-print-none" onclick="window.print()"><i class="bi bi-printer"></i> Друк / PDF</button>
+    </header>
+
+    <section class="roi-hero p-3 rounded mb-4 roi-{{ r.tone }}">
+      <div class="row g-3 align-items-center">
+        <div class="col-12 col-md-5 text-center text-md-start">
+          <div class="small text-body-secondary">Коефіцієнт окупності</div>
+          <div class="display-5 fw-semibold">{{ r.roi|num }}</div>
+          <div class="fw-semibold">{{ r.verdict }}</div>
+        </div>
+        <div class="col-12 col-md-7">
+          <div class="formula">ROI = (D<sub>new</sub> + D<sub>acc</sub>) / C
+            {% if r.roi is not none %}= ({{ r.revenue_new|money(cur) }} + {{ r.revenue_accelerated|money(cur) }}) / {{ r.cost|money(cur) }}{% endif %}</div>
+          <div class="small text-body-secondary mt-2">
+            {% if r.roi is none %}Внесіть кошторис, щоб обчислити окупність.
+            {% elif r.roi < 1 %}Повернулося {{ (r.roi * 100)|round|int }} % вкладеного.
+            {% else %}Кожна вкладена одиниця повернулася {{ r.roi|num }} раза.{% endif %}
+            Норма для галузі — від 3 до 5.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="row g-4">
+      <section class="col-12 col-md-6">
+        <h3 class="h6">Витрати за категоріями</h3>
+        <table class="table table-sm">
+          <tbody>
+          {% for c in by_category %}
+            <tr><td>{{ c.name }}</td><td class="w-50">{{ m.bar(c.s, r.cost, 'secondary') }}</td><td class="text-end text-nowrap">{{ c.s|money(cur) }}</td></tr>
+          {% else %}
+            <tr><td class="text-body-secondary">Кошторис порожній</td></tr>
+          {% endfor %}
+          </tbody>
+          <tfoot><tr class="fw-semibold"><td>Разом (C)</td><td></td><td class="text-end text-nowrap">{{ r.cost|money(cur) }}</td></tr></tfoot>
+        </table>
+      </section>
+      <section class="col-12 col-md-6">
+        <h3 class="h6">Дохід за типами</h3>
+        <table class="table table-sm">
+          <tbody>
+            <tr><td>Нові ліди (D<sub>new</sub>)</td><td class="text-end text-nowrap">{{ r.revenue_new|money(cur) }}</td></tr>
+            <tr><td>Прискорені угоди (D<sub>acc</sub>)</td><td class="text-end text-nowrap">{{ r.revenue_accelerated|money(cur) }}</td></tr>
+          </tbody>
+          <tfoot><tr class="fw-semibold"><td>Разом</td><td class="text-end text-nowrap">{{ r.revenue|money(cur) }}</td></tr></tfoot>
+        </table>
+        <h3 class="h6 mt-3">Показники кампанії</h3>
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><td>Оцінка доцільності</td><td class="text-end">{% if score.scored %}{{ score.total }} з {{ score.max }}{% if score.verdict %} · {{ score.verdict.text }}{% endif %}{% else %}—{% endif %}</td></tr>
+            <tr><td>Цільовий список / зустрічей домовлено</td><td class="text-end">{{ dash.targets_total }} / {{ dash.meetings_set }}</td></tr>
+            <tr><td>Розмов / кваліфікованих лідів</td><td class="text-end">{{ dash.leads_total }} / {{ dash.qualified }}</td></tr>
+            <tr><td>Вартість кваліфікованого ліда</td><td class="text-end">{{ dash.cost_per_qualified|money(cur) }}</td></tr>
+            <tr><td>Відкриті угоди</td><td class="text-end">{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</td></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
+
+    <section class="mt-4">
+      <h3 class="h6">Угоди</h3>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Клієнт</th><th>Тип доходу</th><th>Стадія</th><th>Дата</th><th class="text-end">Сума</th></tr></thead>
+          <tbody>
+          {% for d in deals %}
+            <tr class="{{ 'text-body-secondary' if d.stage != 'won' }}">
+              <td><a href="{{ url_for('leads.detail', lead_id=d.lead_id) }}" class="text-reset">{{ d.full_name }}</a><div class="small text-body-secondary">{{ d.company or '' }}</div></td>
+              <td>{{ refs.REVENUE_TYPES[d.revenue_type] }}</td>
+              <td>{{ m.badge(refs.DEAL_STAGES[d.stage]) }}</td>
+              <td class="text-nowrap">{{ d.close_date|d if d.close_date else '—' }}</td>
+              <td class="text-end text-nowrap">{{ d.amount|money(cur) }}</td>
+            </tr>
+          {% else %}
+            <tr><td colspan="5" class="text-body-secondary">Угод ще немає</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="small text-body-secondary mb-0">До окупності входять лише укладені угоди. Звіт будується з актуальних даних у момент відкриття.</p>
+    </section>
+  </div>
+</article>
+{% endblock %}

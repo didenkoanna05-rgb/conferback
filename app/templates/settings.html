@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% import "_macros.html" as m with context %}
+{% block title %}Довідники{% endblock %}
+{% block content %}
+<h1 class="h3">Довідники</h1>
+<p class="text-body-secondary">Критерії оцінки та категорії витрат можна додавати й вимикати без зміни програми. Пороги оцінки перераховуються автоматично від кількості активних критеріїв.</p>
+<div class="row g-3">
+  {% for kind, title, items in [('criteria', 'Критерії оцінки доцільності', criteria), ('categories', 'Категорії витрат', categories)] %}
+  <div class="col-12 col-lg-6" id="{{ kind }}">
+    <div class="card h-100">
+      <div class="card-header fw-semibold">{{ title }}</div>
+      <ul class="list-group list-group-flush">
+        {% for it in items %}
+        <li class="list-group-item {{ 'opacity-50' if not it.is_active }}">
+          <form method="post" action="{{ url_for('settings.save', kind=kind) }}" class="d-flex flex-wrap gap-2 align-items-center">
+            {{ m.csrf() }}<input type="hidden" name="id" value="{{ it.id }}">
+            <input class="form-control form-control-sm flex-grow-1 w-auto" name="name" value="{{ it.name }}" aria-label="Назва">
+            {% if kind == 'criteria' %}<input class="form-control form-control-sm w-100" name="hint" value="{{ it.hint or '' }}" placeholder="Підказка" aria-label="Підказка">{% endif %}
+            <button class="btn btn-sm btn-outline-primary" name="action" value="rename">Зберегти</button>
+            <button class="btn btn-sm btn-outline-secondary" name="action" value="toggle">{{ 'Вимкнути' if it.is_active else 'Увімкнути' }}</button>
+          </form>
+        </li>
+        {% endfor %}
+      </ul>
+      <form method="post" action="{{ url_for('settings.save', kind=kind) }}" class="card-body border-top d-flex flex-wrap gap-2">
+        {{ m.csrf() }}<input type="hidden" name="action" value="add">
+        <input class="form-control flex-grow-1 w-auto" name="name" placeholder="Нова назва" required>
+        {% if kind == 'criteria' %}<input class="form-control w-100" name="hint" placeholder="Підказка (необов'язково)">{% endif %}
+        <button class="btn btn-primary"><i class="bi bi-plus-lg"></i> Додати</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

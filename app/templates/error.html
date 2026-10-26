@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <div class="display-4 text-body-tertiary">{{ code }}</div>
+  <h1 class="h4 mt-2">{{ title }}</h1>
+  {% if detail %}<p class="text-body-secondary">{{ detail }}</p>{% endif %}
+  {% if code == 403 %}<p class="text-body-secondary">Права кожної ролі описано на сторінці <a href="{{ url_for('auth.roles') }}">«Ролі»</a>.</p>{% endif %}
+  <a class="btn btn-primary mt-2" href="{{ url_for('events.index') }}">На головну</a>
+</div>
+{% endblock %}
