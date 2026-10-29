@@ -166,6 +166,19 @@ def set_status(target_id):
     return redirect(back if back.startswith("/") else "/")
 
 
+@bp.route("/targets/<int:target_id>/delete", methods=["POST"])
+@require("targets_edit")
+def delete(target_id):
+    """Вилучення контакту зі списку до події. Лід, якщо його вже створено, лишається."""
+    target = query("SELECT * FROM targets WHERE id = ?", (target_id,), one=True)
+    if target is None:
+        abort(404)
+    execute("DELETE FROM targets WHERE id = ?", (target_id,))
+    flash(f"Контакт {target['full_name']} вилучено зі списку.", "success")
+    back = request.form.get("back") or ""
+    return redirect(back if back.startswith("/") else url_for("targets.index", event_id=target["event_id"]))
+
+
 @bp.route("/targets/<int:target_id>/edit", methods=["GET", "POST"])
 @require("targets_edit")
 def edit(target_id):

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% import "_macros.html" as m with context %}
-{% block title %}Як рахуємо{% endblock %}
+{% block title %}Довідка{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-12 col-lg-9">
-    {{ m.page_head('Як рахуються показники', 'Усі формули системи простими словами', 'calculator') }}
+    {{ m.page_head('Довідка: як рахуються показники', 'Усі формули системи простими словами', 'question-circle') }}
     <p class="text-body-secondary"> Біля кожного показника на сайті є значок <i class="bi bi-question-circle"></i>: наведіть на нього, щоб побачити коротке пояснення, або натисніть, щоб відкрити цю сторінку.</p>
     <nav class="formula-toc mb-4">
       {% for key, f in formulas.items() %}<a class="chip" href="#{{ key }}">{{ f.title }}</a>{% endfor %}

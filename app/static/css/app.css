@@ -287,3 +287,18 @@ a.channel:hover { text-decoration: underline; }
   .filter-select .form-select { flex: 1 1 auto; min-width: 0; }
   .filter-reset { margin-left: 0; }
 }
+.table-responsive { position: relative; }
+
+/* ---- Верхнє меню: відстані, чіткі пункти, підсвічений поточний розділ ---- */
+.app-menu { gap: .35rem; }
+.app-nav .app-menu .nav-link {
+  color: rgba(255,255,255,.85); font-weight: 500; padding: .45rem .8rem; border-radius: .6rem;
+  display: flex; align-items: center; gap: .4rem; transition: background .15s, color .15s;
+}
+.app-nav .app-menu .nav-link:hover { background: rgba(255,255,255,.1); color: #fff; }
+.app-nav .app-menu .nav-link.active {
+  background: #fff; color: var(--cb-navy); font-weight: 600; box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.app-nav .app-menu .nav-link.active .bi { color: var(--cb-accent); }
+@media (min-width: 992px) { .app-menu { margin-left: 1.25rem; } }
+@media (max-width: 991.98px) { .app-menu { padding: .5rem 0; gap: .2rem; } }

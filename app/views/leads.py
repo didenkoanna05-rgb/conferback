@@ -506,3 +506,21 @@ def import_template():
             "теплий;Бюджет на наступний рік\n")
     return Response("﻿" + text, mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=conferback-leads-template.csv"})
+
+
+@bp.route("/leads/<int:lead_id>/delete", methods=["POST"])
+@require("lead_delete")
+def delete(lead_id):
+    """Вилучення ліда з події разом з історією фолоу-апів та угодою."""
+    lead = query("SELECT * FROM leads WHERE id = ?", (lead_id,), one=True)
+    if lead is None:
+        abort(404)
+    execute("DELETE FROM leads WHERE id = ?", (lead_id,))
+    if lead["target_id"] and lead["met"]:
+        # Розмови в обліку більше немає, тому контакт зі списку повертається до стану «зустріч домовлено»
+        execute("UPDATE targets SET status = CASE WHEN meeting_at IS NOT NULL THEN 'meeting' ELSE 'replied' END "
+                "WHERE id = ? AND status = 'met'", (lead["target_id"],))
+    flash(f"Ліда {lead['full_name']} вилучено.", "success")
+    back = request.form.get("back") or ""
+    return redirect(back if back.startswith("/") and "/leads/" not in back
+                    else url_for("leads.event_leads", event_id=lead["event_id"]))

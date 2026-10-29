@@ -90,12 +90,15 @@
           </div>
         </div>
         {% if can('targets_edit') %}
+        <div class="d-flex align-items-center gap-1">
         <form method="post" action="{{ url_for('targets.set_status', target_id=t.id) }}" class="status-form">
           {{ m.csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}">
           <select class="form-select form-select-sm status-select status-{{ refs.TARGET_STATUSES[t.status][1] }}" name="status" onchange="this.form.submit()" aria-label="Стан">
             {% for k, (label, tone) in refs.TARGET_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if t.status == k }}>{{ label }}</option>{% endfor %}
           </select>
         </form>
+        {{ m.delete_button(url_for('targets.delete', target_id=t.id), 'Вилучити контакт ' ~ t.full_name ~ ' зі списку події?') }}
+        </div>
         {% else %}
         {{ m.badge(refs.TARGET_STATUSES[t.status]) }}
         {% endif %}

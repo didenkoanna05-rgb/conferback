@@ -100,7 +100,7 @@
   <div class="table-responsive">
     <table class="table table-hover align-middle mb-0 crm-table">
       <thead>
-        <tr><th>Контакт</th><th>Канал</th><th>Зацікавленість</th><th class="d-none d-md-table-cell">Наступний крок</th><th class="d-none d-lg-table-cell">Відповідальний</th><th>Фолоу-ап</th><th>Стан</th></tr>
+        <tr><th>Контакт</th><th>Канал</th><th>Зацікавленість</th><th class="d-none d-md-table-cell">Наступний крок</th><th class="d-none d-lg-table-cell">Відповідальний</th><th>Фолоу-ап</th><th>Стан</th>{% if can('lead_delete') %}<th class="text-end d-none d-md-table-cell"><span class="visually-hidden">Дії</span></th>{% endif %}</tr>
       </thead>
       <tbody>
       {% for l in leads %}
@@ -117,6 +117,9 @@
           <td class="d-none d-lg-table-cell small">{{ l.owner_name or '—' }}</td>
           <td class="small text-nowrap {{ 'text-danger fw-semibold' if overdue }}">{{ l.due_date|d if l.due_date else '—' }}{% if l.last_contact %}<div class="text-body-secondary fw-normal">був {{ l.last_contact|d(short=true) }}</div>{% endif %}</td>
           <td>{{ m.badge(refs.LEAD_STATUSES[l.status]) }}{% if l.deal_stage %}<div class="small text-nowrap mt-1">{{ l.deal_amount|money(event.currency) }}</div>{% endif %}</td>
+          {% if can('lead_delete') %}
+          <td class="text-end d-none d-md-table-cell">{{ m.delete_button(url_for('leads.delete', lead_id=l.id), 'Вилучити ліда ' ~ l.full_name ~ '? Разом з ним зникнуть історія фолоу-апів і угода.') }}</td>
+          {% endif %}
         </tr>
       {% endfor %}
       </tbody>
@@ -146,9 +149,12 @@
           <div class="small text-body-secondary">{{ t.company }} · {{ refs.TARGET_STATUSES[t.status][0]|lower }}{% if t.owner_name %} · {{ t.owner_name }}{% endif %}</div>
         </div>
       </div>
+      <div class="d-flex gap-1">
       {% if can('followup') %}
       <form method="post" action="{{ url_for('leads.take', target_id=t.id, view=view) }}">{{ m.csrf() }}<button class="btn btn-sm btn-outline-primary">Взяти в роботу</button></form>
       {% endif %}
+      {% if can('targets_edit') %}{{ m.delete_button(url_for('targets.delete', target_id=t.id), 'Вилучити контакт ' ~ t.full_name ~ ' зі списку події?') }}{% endif %}
+      </div>
     </li>
     {% endfor %}
   </ul>

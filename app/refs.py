@@ -19,6 +19,7 @@ PERMISSIONS = {
     "lead_capture": {"rep", "manager"},       # фіксація розмови
     "lead_edit": {"rep", "manager"},
     "lead_import": {"head", "marketer", "manager"},  # імпорт лідів файлом і додавання вручну
+    "lead_delete": {"head", "marketer", "manager"},  # вилучення ліда разом з фолоу-апами й угодою
     "followup": {"manager"},                  # черга і фолоу-апи
     "deal": {"manager", "head"},
     "deals_view": {"manager", "head", "marketer"},
@@ -38,13 +39,14 @@ PERMISSION_LABELS = {
     "lead_capture": "Фіксація розмови на заході",
     "lead_edit": "Редагування картки ліда",
     "lead_import": "Імпорт лідів файлом і додавання вручну",
+    "lead_delete": "Вилучення ліда з події",
     "followup": "Реєстрація фолоу-апів",
     "deal": "Реєстрація угод і зміна етапу",
     "deals_view": "Дошка угод",
     "queue": "Черга дій",
     "analytics": "Аналітична дошка і звіт про подію",
     "export": "Вивантаження лідів у CSV",
-    "settings": "Довідники: критерії та категорії витрат",
+    "settings": "Налаштування: критерії та категорії витрат",
     "users": "Керування користувачами",
 }
 

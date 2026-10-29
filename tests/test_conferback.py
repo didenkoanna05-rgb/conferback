@@ -156,3 +156,21 @@ def test_import_leads_without_header():
 def test_pages_open(app, url):
     # Кожна сторінка відкривається без помилки сервера
     assert login(app, "head").get(url).status_code == 200
+
+
+def test_delete_target_and_lead(app):
+    c = login(app, "head")
+    token = page_token(c, "/events/1/leads")
+    c.post("/events/1/leads/new", data={"csrf_token": token, "full_name": "Ivan Test", "intent": "2"})
+    with app.app_context():
+        from app.db import query
+        lead_id = query("SELECT id FROM leads WHERE full_name = 'Ivan Test'", one=True)["id"]
+    assert c.post(f"/leads/{lead_id}/delete", data={"csrf_token": token}).status_code == 302
+    assert c.post("/targets/1/delete", data={"csrf_token": token}).status_code == 302
+    with app.app_context():
+        from app.db import query
+        assert query("SELECT COUNT(*) AS n FROM leads", one=True)["n"] == 0
+        assert query("SELECT COUNT(*) AS n FROM targets", one=True)["n"] == 0
+    # Представник на заході не може вилучати
+    rep = login(app, "rep")
+    assert rep.post("/targets/1/delete", data={"csrf_token": page_token(rep, "/")}).status_code == 403

@@ -5,6 +5,7 @@
 {% call m.page_head(lead.full_name, (lead.company or '') ~ (' · ' ~ lead.position if lead.position else ''), 'person-vcard', url_for('leads.event_leads', event_id=lead.event_id), 'Ліди · ' ~ lead.event_name) %}
   <div class="d-flex flex-wrap gap-2 align-items-center">
     {{ m.intent_badge(lead.intent if lead.met else none) }} {{ m.badge(refs.LEAD_STATUSES[lead.status]) }}
+    {% if can('lead_delete') %}{{ m.delete_button(url_for('leads.delete', lead_id=lead.id), 'Вилучити ліда ' ~ lead.full_name ~ '? Разом з ним зникнуть історія фолоу-апів і угода.', 'Вилучити') }}{% endif %}
   </div>
 {% endcall %}
 

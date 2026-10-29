@@ -25,8 +25,8 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="mainNav">
-      <ul class="navbar-nav me-auto">
-        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'events.index' %}active{% endif %}" href="{{ url_for('events.index') }}"><i class="bi bi-calendar-event"></i> Події</a></li>
+      <ul class="navbar-nav me-auto app-menu">
+        <li class="nav-item"><a class="nav-link {% if request.endpoint and (request.endpoint.startswith('targets.') or request.endpoint in ('events.index', 'events.detail', 'events.costs', 'events.edit', 'events.new', 'leads.event_leads', 'leads.detail', 'analytics.dashboard', 'analytics.report')) %}active{% endif %}" href="{{ url_for('events.index') }}"><i class="bi bi-calendar-event"></i> Події</a></li>
         {% if can('queue') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'leads.queue' %}active{% endif %}" href="{{ url_for('leads.queue') }}"><i class="bi bi-list-check"></i> Черга дій</a></li>
         {% endif %}
@@ -39,9 +39,9 @@
         {% if can('lead_capture') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint in ('events.capture_choose', 'leads.capture') %}active{% endif %}" href="{{ url_for('events.capture_choose') }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a></li>
         {% endif %}
-        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'events.formulas' %}active{% endif %}" href="{{ url_for('events.formulas') }}"><i class="bi bi-question-circle"></i> Як рахуємо</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'events.formulas' %}active{% endif %}" href="{{ url_for('events.formulas') }}"><i class="bi bi-question-circle"></i> Довідка</a></li>
         {% if can('settings') %}
-        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'settings.index' %}active{% endif %}" href="{{ url_for('settings.index') }}"><i class="bi bi-sliders"></i> Довідники</a></li>
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'settings.index' %}active{% endif %}" href="{{ url_for('settings.index') }}"><i class="bi bi-sliders"></i> Налаштування</a></li>
         {% endif %}
         {% if can('users') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'auth.users' %}active{% endif %}" href="{{ url_for('auth.users') }}"><i class="bi bi-people"></i> Користувачі</a></li>

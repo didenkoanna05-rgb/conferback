@@ -76,8 +76,15 @@
 </header>
 {%- endmacro %}
 
+{% macro delete_button(action, question, label='') -%}
+  <form method="post" action="{{ action }}" class="d-inline" onsubmit="return confirm({{ question|tojson|forceescape }})">
+    {{ csrf() }}<input type="hidden" name="back" value="{{ request.full_path }}">
+    <button class="btn btn-sm {{ 'btn-outline-danger' if label else 'btn-link text-danger p-1' }}" title="Вилучити" aria-label="Вилучити"><i class="bi bi-trash"></i>{% if label %} {{ label }}{% endif %}</button>
+  </form>
+{%- endmacro %}
+
 {% macro help(key) -%}
-  <a href="{{ url_for('events.formulas') }}#{{ key }}" class="help-tip" data-bs-toggle="tooltip" data-bs-title="{{ formulas[key].short }}" aria-label="Як рахується: {{ formulas[key].title }}"><i class="bi bi-question-circle"></i></a>
+  <a href="{{ url_for('events.formulas') }}#{{ key }}" class="help-tip" data-bs-toggle="tooltip" data-bs-title="{{ formulas[key].short }}" aria-label="Довідка: {{ formulas[key].title }}"><i class="bi bi-question-circle"></i></a>
 {%- endmacro %}
 
 {% macro stat(label, value, hint='', tone='', tip=None) %}
