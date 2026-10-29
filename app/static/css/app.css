@@ -267,3 +267,5 @@ a.channel:hover { text-decoration: underline; }
   .page-actions .btn:not(.btn-sm) { flex: 1 1 auto; }
   .page-head .event-tabs { margin: .85rem -.9rem -.85rem; padding: 0 .9rem; }
 }
+.formula-hint { background: #f2f5fa; border-left: 3px solid var(--bs-primary); border-radius: .4rem; padding: .6rem .8rem; }
+.forecast-box summary { cursor: pointer; }

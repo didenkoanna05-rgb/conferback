@@ -165,6 +165,18 @@
         </div>
         <button type="button" class="btn btn-sm btn-link px-0 mt-1" id="ne_addCost"><i class="bi bi-plus-lg"></i> Ще рядок</button>
         <div class="form-text">Це планові суми. Фактичні витрати можна внести пізніше у вкладці «Витрати». Порожні рядки не зберігаються.</div>
+
+        <details class="mt-4 forecast-box">
+          <summary class="h6 mb-0"><i class="bi bi-graph-up"></i> Прогноз прибутку <span class="text-body-secondary fw-normal small">(за бажанням, можна заповнити пізніше)</span></summary>
+          <p class="small text-body-secondary mt-2 mb-2">Допомагає ще до поїздки оцінити, чи окупиться подія:
+            <b>Прогноз = Зустрічі × Частка угод × Середня сума угоди − Витрати</b>. Зустрічі й витрати система порахує сама. {{ m.help('forecast') }}</p>
+          <div class="row g-2">
+            <div class="col-12 col-md-6"><label class="form-label small" for="ne_rate">Яка частка зустрічей зазвичай стає угодою, %</label>
+              <input class="form-control" id="ne_rate" name="close_rate" inputmode="decimal" placeholder="20"></div>
+            <div class="col-12 col-md-6"><label class="form-label small" for="ne_deal">Середня сума однієї угоди</label>
+              <input class="form-control" id="ne_deal" name="avg_deal" inputmode="decimal" placeholder="25000"></div>
+          </div>
+        </details>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Скасувати</button>

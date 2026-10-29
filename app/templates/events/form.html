@@ -20,12 +20,11 @@
           <label class="form-label" for="address">Адреса місця проведення</label>
           <input class="form-control" id="address" name="address" value="{{ event.address or '' }}" maxlength="300" placeholder="Наприклад, FIL, Rossio dos Olivais">
         </div>
-        <div class="d-none d-md-block col-md-4"></div>
-        <div class="col-6 col-md-4">
+        <div class="col-6">
           <label class="form-label" for="start_date">Початок *</label>
           <input class="form-control" type="date" id="start_date" name="start_date" value="{{ event.start_date or '' }}" required>
         </div>
-        <div class="col-6 col-md-4">
+        <div class="col-6">
           <label class="form-label" for="end_date">Кінець *</label>
           <input class="form-control" type="date" id="end_date" name="end_date" value="{{ event.end_date or '' }}" required>
         </div>
@@ -52,17 +51,22 @@
         </div>
       </div>
       <hr class="my-4">
-      <h2 class="h6 mb-1">Параметри прогнозу <span class="text-body-secondary fw-normal">(необов'язково)</span></h2>
-      <p class="small text-body-secondary">Потрібні для прогнозу результату до події за формулою P = K · Ch · V − C.</p>
+      <h2 class="h6 mb-1"><i class="bi bi-graph-up"></i> Прогноз прибутку <span class="text-body-secondary fw-normal">(за бажанням)</span> {{ m.help('forecast') }}</h2>
+      <p class="small text-body-secondary mb-2">Допомагає ще до поїздки оцінити, чи окупиться подія. Система множить кількість домовлених зустрічей на те, яка їх частина зазвичай стає угодою, і на середню суму угоди, а потім віднімає витрати:</p>
+      <div class="formula-hint small mb-3"><b>Прогноз = Зустрічі × Частка угод × Середня сума угоди − Витрати</b><br>
+        Наприклад: 8 зустрічей × 20 % × 25 000 $ − 14 000 $ = <b>26 000 $</b> очікуваного прибутку.
+        Кількість зустрічей і витрати система бере сама, тут треба вказати лише два числа з досвіду компанії.</div>
       <div class="row g-3">
-        <div class="col-6">
-          <label class="form-label" for="close_rate">Частка закриття угод, %</label>
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="close_rate">Яка частка зустрічей зазвичай стає угодою, %</label>
           <input class="form-control" id="close_rate" name="close_rate" inputmode="decimal"
-                 value="{{ (event.close_rate * 100)|round(1) if event.close_rate is not none else '' }}" placeholder="20">
+                 value="{{ (event.close_rate * 100)|plain if event.close_rate is not none else '' }}" placeholder="20">
+          <div class="form-text">Наприклад, 20 % означає, що з 10 зустрічей зазвичай виходить 2 угоди.</div>
         </div>
-        <div class="col-6">
-          <label class="form-label" for="avg_deal">Середня вартість контракту</label>
-          <input class="form-control" id="avg_deal" name="avg_deal" inputmode="decimal" value="{{ event.avg_deal if event.avg_deal is not none else '' }}" placeholder="25000">
+        <div class="col-12 col-md-6">
+          <label class="form-label" for="avg_deal">Середня сума однієї угоди</label>
+          <input class="form-control" id="avg_deal" name="avg_deal" inputmode="decimal" value="{{ event.avg_deal|plain if event.avg_deal is not none else '' }}" placeholder="25000">
+          <div class="form-text">Типовий розмір контракту з клієнтом, у валюті події.</div>
         </div>
       </div>
       <div class="d-flex gap-2 mt-4">
