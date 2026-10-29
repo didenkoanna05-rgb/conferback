@@ -148,3 +148,11 @@ def test_import_leads_without_header():
     leads, _ = importer.parse_leads(importer.rows_from_text("James Smith;NordPay;CIO;https://linkedin.com/in/js\n"))
     assert leads[0]["linkedin_url"] == "https://linkedin.com/in/js" and leads[0]["intent"] == 2
     assert leads[0]["channel"] == "linkedin"
+
+
+@pytest.mark.parametrize("url", ["/", "/events/new", "/events/1", "/events/1/edit", "/events/1/costs",
+                                 "/events/1/targets", "/events/1/meetings", "/events/1/leads", "/events/1/dashboard",
+                                 "/events/1/report", "/formulas", "/queue", "/deals", "/stats", "/settings"])
+def test_pages_open(app, url):
+    # Кожна сторінка відкривається без помилки сервера
+    assert login(app, "head").get(url).status_code == 200

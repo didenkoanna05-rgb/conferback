@@ -15,7 +15,7 @@
 <body class="{% block body_class %}{% endblock %}">
 {% if current_user %}
 <nav class="navbar navbar-expand-lg navbar-dark app-nav sticky-top">
-  <div class="container-xl">
+  <div class="container-fluid app-container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="{{ url_for('events.index') }}">
       <img src="{{ url_for('static', filename='img/icon.svg') }}" alt="" width="28" height="28">
       <span>Confer<b>Back</b></span>
@@ -66,7 +66,7 @@
 
 <div id="netStatus" class="net-status d-none" role="status"></div>
 
-<main class="container-xl py-3 py-md-4">
+<main class="container-fluid app-container py-3 py-md-4">
   {% with messages = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in messages %}
     <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">

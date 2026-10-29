@@ -1,10 +1,10 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m with context %}
 {% block title %}{{ 'Нова подія' if is_new else 'Редагування події' }}{% endblock %}
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-12 col-lg-8">
-    <a href="{{ url_for('events.index') if is_new else url_for('events.detail', event_id=event.id) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Назад</a>
-    <h1 class="h3 mt-1 mb-3">{{ 'Нова кампанія участі' if is_new else 'Редагування кампанії' }}</h1>
+    {{ m.page_head('Нова подія' if is_new else 'Редагування події', event.name if not is_new else '', 'pencil-square', url_for('events.index') if is_new else url_for('events.detail', event_id=event.id), 'Назад') }}
     <form method="post" class="card card-body shadow-sm">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <div class="row g-3">

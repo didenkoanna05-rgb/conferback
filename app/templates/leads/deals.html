@@ -2,18 +2,14 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Угоди{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <div>
-    <h1 class="h3 mb-0">Угоди</h1>
-    <div class="text-body-secondary small">Ліди, що стали угодами, за етапами.{% if can('deal') %} Картку можна перетягнути в іншу колонку.{% endif %}</div>
-  </div>
+{% call m.page_head('Угоди', 'Ліди, що стали угодами, за етапами.' ~ (' Картку можна перетягнути в іншу колонку.' if can('deal') else ''), 'briefcase') %}
   <form method="get">
     <select class="form-select form-select-sm w-auto" name="event" onchange="this.form.submit()" aria-label="Подія">
       <option value="">Усі події</option>
       {% for e in events %}<option value="{{ e.id }}" {{ 'selected' if event_id == e.id }}>{{ e.name }}</option>{% endfor %}
     </select>
   </form>
-</div>
+{% endcall %}
 
 <div class="deal-board" data-can-move="{{ 1 if can('deal') else 0 }}">
   {% for stage, (label, tone) in refs.DEAL_STAGES.items() %}

@@ -4,8 +4,9 @@
 {% block content %}
 <div class="row justify-content-center">
   <div class="col-12 col-lg-8">
-    <a href="{{ url_for('targets.index', event_id=event.id) }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Контакти до події · {{ event.name }}</a>
-    <h1 class="h3 mt-1 mb-3 d-flex flex-wrap align-items-center gap-2">{{ m.priority(target.priority) }} {{ target.full_name }} {{ m.badge(refs.TARGET_STATUSES[target.status]) }}</h1>
+    {% call m.page_head(target.full_name, (target.company or '') ~ (' · ' ~ target.position if target.position else ''), 'person-lines-fill', url_for('targets.index', event_id=event.id), 'Контакти до події · ' ~ event.name) %}
+      <div class="d-flex gap-2 align-items-center">{{ m.priority(target.priority) }} {{ m.badge(refs.TARGET_STATUSES[target.status]) }}</div>
+    {% endcall %}
     {% if leads %}
     <div class="alert alert-success small">
       {% for l in leads %}<i class="bi bi-chat-square-text"></i> <a href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ 'Розмова на події ' ~ (l.captured_at|dt) if l.met else 'Узято в роботу після події' }}</a>{{ ', ' if not loop.last }}{% endfor %}

@@ -7,7 +7,7 @@
   --bs-primary-rgb: 43, 92, 154;
   --bs-link-color: #2b5c9a;
   --bs-link-color-rgb: 43, 92, 154;
-  --bs-body-bg: #f5f7fa;
+  --bs-body-bg: #eef2f7;
   --bs-teal: #14a39a;
 }
 body { -webkit-tap-highlight-color: transparent; }
@@ -24,8 +24,10 @@ body { -webkit-tap-highlight-color: transparent; }
 .app-nav .nav-link.active, .app-nav .nav-link:hover { color: #fff; }
 .nav-user { color: rgba(255,255,255,.9); font-size: .9rem; }
 
-.card { border-color: #e3e8ef; border-radius: .75rem; }
-.card-header { background: #fff; border-bottom-color: #eef1f5; }
+.card { border-color: #e1e7ef; border-radius: .85rem; box-shadow: 0 1px 2px rgba(16, 32, 56, .05); }
+.card-header { background: #f8fafd; border-bottom-color: #e8edf3; color: var(--cb-navy); font-weight: 600; padding-top: .7rem; padding-bottom: .7rem; }
+.card-header:first-child { border-radius: .85rem .85rem 0 0; }
+.card-header .bi { color: var(--bs-primary); }
 
 /* Картки подій */
 .event-card { color: inherit; transition: box-shadow .15s, transform .15s; }
@@ -46,7 +48,7 @@ body { -webkit-tap-highlight-color: transparent; }
 .stat-primary { border-left-color: var(--bs-primary); }
 .stat-danger .stat-value { color: var(--bs-danger); }
 
-.event-tabs { border-bottom: 1px solid #dfe5ec; white-space: nowrap; }
+.event-tabs { white-space: nowrap; }
 .event-tabs .nav-link { color: var(--bs-secondary-color); }
 .event-tabs .nav-link.active { color: var(--bs-primary); }
 .goal { background: #fff; border-left: 4px solid var(--cb-accent); }
@@ -228,3 +230,40 @@ a.channel:hover { text-decoration: underline; }
 .formula-card .example { background: #fff8e6; padding: .5rem .75rem; border-radius: .4rem; }
 .cost-line + .cost-line { margin-top: 0; }
 .queue-day { background: #f2f5fa; font-size: .8rem; font-weight: 600; color: var(--bs-secondary-color); padding-top: .35rem; padding-bottom: .35rem; }
+
+
+/* ---- Ширина сторінки і заголовки ---- */
+.app-container { padding-left: 1rem; padding-right: 1rem; }
+@media (min-width: 768px) { .app-container { padding-left: 1.5rem; padding-right: 1.5rem; } }
+@media (min-width: 1400px) { .app-container { padding-left: 2.5rem; padding-right: 2.5rem; } }
+
+.page-head {
+  position: relative; background: linear-gradient(120deg, #ffffff 55%, #f1f5fb);
+  border: 1px solid #e1e7ef; border-radius: 1rem; padding: 1rem 1.25rem; margin-bottom: 1.25rem;
+  box-shadow: 0 2px 8px rgba(16, 32, 56, .05); overflow: hidden;
+}
+.page-head::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: linear-gradient(var(--cb-navy), var(--bs-primary)); }
+.page-back { display: inline-block; font-size: .82rem; text-decoration: none; margin-bottom: .4rem; }
+.page-head-row { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem 1rem; }
+.page-icon {
+  width: 2.9rem; height: 2.9rem; border-radius: .85rem; display: grid; place-items: center; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--cb-navy), var(--bs-primary)); color: #fff; font-size: 1.3rem;
+  box-shadow: 0 4px 10px rgba(31, 58, 95, .25);
+}
+.page-head-text { flex: 1 1 16rem; min-width: 0; }
+.page-title { font-size: 1.6rem; font-weight: 650; color: var(--cb-navy); margin: 0; line-height: 1.25; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.page-sub { color: var(--bs-secondary-color); font-size: .9rem; margin-top: .15rem; }
+.page-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-left: auto; }
+.page-head .event-tabs { margin: 1rem -1.25rem -1rem; padding: 0 1.25rem; border-top: 1px solid #e8edf3; background: rgba(248, 250, 253, .7); }
+.page-head .event-tabs .nav-link { padding-top: .7rem; padding-bottom: .7rem; }
+.stage-title { padding-left: .6rem; border-left: 3px solid var(--cb-accent); color: var(--cb-navy); }
+
+@media (max-width: 575.98px) {
+  .page-head { padding: .85rem .9rem; border-radius: .85rem; margin-bottom: 1rem; }
+  .page-icon { width: 2.4rem; height: 2.4rem; font-size: 1.1rem; border-radius: .7rem; }
+  .page-title { font-size: 1.3rem; }
+  .page-actions { margin-left: 0; width: 100%; }
+  .page-actions > .d-flex, .page-actions > form { width: 100%; }
+  .page-actions .btn:not(.btn-sm) { flex: 1 1 auto; }
+  .page-head .event-tabs { margin: .85rem -.9rem -.85rem; padding: 0 .9rem; }
+}

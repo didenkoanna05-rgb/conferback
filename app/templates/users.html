@@ -2,8 +2,7 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Користувачі{% endblock %}
 {% block content %}
-<h1 class="h3">Користувачі</h1>
-<p class="text-body-secondary">Одна людина може мати кілька ролей. Права ролей описано на сторінці <a href="{{ url_for('auth.roles') }}">«Ролі»</a>.</p>
+{% call m.page_head('Користувачі', 'Одна людина може мати кілька ролей', 'people') %}<a class="btn btn-outline-primary" href="{{ url_for('auth.roles') }}"><i class="bi bi-shield-check"></i> Права ролей</a>{% endcall %}
 <div class="card mb-3">
   <ul class="list-group list-group-flush">
   {% for u in users %}

@@ -28,12 +28,13 @@
 {%- endmacro %}
 
 {% macro event_header(event, phase, tab) %}
-<div class="event-head mb-3">
-  <div class="d-flex flex-wrap align-items-start justify-content-between gap-2">
-    <div>
-      <a href="{{ url_for('events.index') }}" class="small text-decoration-none"><i class="bi bi-arrow-left"></i> Усі події</a>
-      <h1 class="h3 mb-1 mt-1">{{ event.name }}</h1>
-      <div class="text-body-secondary small">
+<div class="event-head page-head mb-3">
+  <a class="page-back" href="{{ url_for('events.index') }}"><i class="bi bi-arrow-left"></i> Усі події</a>
+  <div class="page-head-row">
+    <span class="page-icon" aria-hidden="true"><i class="bi bi-calendar-event"></i></span>
+    <div class="page-head-text">
+      <h1 class="page-title">{{ event.name }}</h1>
+      <div class="page-sub">
         <i class="bi bi-geo-alt"></i> {{ event.city or '—' }}
         <span class="mx-1">·</span><i class="bi bi-calendar3"></i> {{ event.start_date|d }} – {{ event.end_date|d }}
         <span class="mx-1">·</span>{{ 'зі стендом' if event.has_booth else 'без стенда' }}
@@ -43,10 +44,10 @@
       </div>
     </div>
     {% if can('lead_capture') and phase != 'finished' %}
-    <a class="btn btn-accent" href="{{ url_for('leads.capture', event_id=event.id) }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a>
+    <div class="page-actions"><a class="btn btn-accent" href="{{ url_for('leads.capture', event_id=event.id) }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a></div>
     {% endif %}
   </div>
-  <ul class="nav nav-underline event-tabs mt-3 flex-nowrap overflow-auto">
+  <ul class="nav nav-underline event-tabs flex-nowrap overflow-auto">
     {% for key, endpoint, label, icon, perm in [
         ('overview', 'events.detail', 'Планування', 'clipboard-check', None),
         ('costs', 'events.costs', 'Витрати', 'wallet2', None),
@@ -60,6 +61,20 @@
   </ul>
 </div>
 {% endmacro %}
+
+{% macro page_head(title, subtitle='', icon='', back=None, back_label='') -%}
+<header class="page-head">
+  {% if back %}<a class="page-back" href="{{ back }}"><i class="bi bi-arrow-left"></i> {{ back_label }}</a>{% endif %}
+  <div class="page-head-row">
+    {% if icon %}<span class="page-icon" aria-hidden="true"><i class="bi bi-{{ icon }}"></i></span>{% endif %}
+    <div class="page-head-text">
+      <h1 class="page-title">{{ title }}</h1>
+      {% if subtitle %}<div class="page-sub">{{ subtitle }}</div>{% endif %}
+    </div>
+    {% if caller is defined %}<div class="page-actions">{{ caller() }}</div>{% endif %}
+  </div>
+</header>
+{%- endmacro %}
 
 {% macro help(key) -%}
   <a href="{{ url_for('events.formulas') }}#{{ key }}" class="help-tip" data-bs-toggle="tooltip" data-bs-title="{{ formulas[key].short }}" aria-label="Як рахується: {{ formulas[key].title }}"><i class="bi bi-question-circle"></i></a>

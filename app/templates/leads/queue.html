@@ -2,11 +2,7 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Черга дій{% endblock %}
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-  <div>
-    <h1 class="h3 mb-0">Черга дій</h1>
-    <div class="text-body-secondary small">Кому і коли написати після події</div>
-  </div>
+{% call m.page_head('Черга дій', 'Кому і коли написати після події', 'list-check') %}
   <form method="get" class="d-flex flex-wrap gap-2">
     <select class="form-select form-select-sm w-auto" name="event" onchange="this.form.submit()" aria-label="Подія">
       <option value="">Усі події</option>
@@ -19,7 +15,7 @@
       <label class="btn btn-outline-primary" for="mine0">Усі</label>
     </div>
   </form>
-</div>
+{% endcall %}
 
 <div class="stats-row mb-3">
   {{ m.stat('Прострочено', groups.overdue|length, '', 'danger' if groups.overdue else '') }}

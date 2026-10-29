@@ -2,8 +2,7 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Довідники{% endblock %}
 {% block content %}
-<h1 class="h3">Довідники</h1>
-<p class="text-body-secondary">Критерії оцінки та категорії витрат можна додавати й вимикати без зміни програми. Пороги оцінки перераховуються автоматично від кількості активних критеріїв.</p>
+{{ m.page_head('Довідники', 'Критерії оцінки та категорії витрат можна додавати й вимикати без зміни програми. Пороги оцінки перераховуються автоматично.', 'sliders') }}
 <div class="row g-3">
   {% for kind, title, items in [('criteria', 'Критерії оцінки доцільності', criteria), ('categories', 'Категорії витрат', categories)] %}
   <div class="col-12 col-lg-6" id="{{ kind }}">

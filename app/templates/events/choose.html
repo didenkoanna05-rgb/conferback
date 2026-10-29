@@ -2,8 +2,7 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Записати розмову{% endblock %}
 {% block content %}
-<h1 class="h3">Записати розмову</h1>
-<p class="text-body-secondary">Оберіть подію, на якій відбулася розмова.</p>
+{{ m.page_head('Записати розмову', 'Оберіть подію, на якій відбулася розмова', 'chat-square-text') }}
 <div class="list-group">
   {% for c in cards %}
   <a class="list-group-item list-group-item-action py-3 d-flex justify-content-between align-items-center"

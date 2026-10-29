@@ -1,7 +1,8 @@
 {% extends "base.html" %}
+{% import "_macros.html" as m with context %}
 {% block title %}Ролі{% endblock %}
 {% block content %}
-<h1 class="h3">Ролі та права</h1>
+{{ m.page_head('Ролі та права', 'Хто що може робити в системі', 'shield-check') }}
 <p class="text-body-secondary">Ваші ролі: {% for r in refs.ROLES if r in current_user.roles %}<b>{{ refs.ROLES[r] }}</b>{{ ', ' if not loop.last }}{% endfor %}. Переглядати події та ліди можуть усі користувачі.</p>
 <div class="card">
   <div class="table-responsive">

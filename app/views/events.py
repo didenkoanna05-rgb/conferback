@@ -114,7 +114,9 @@ def new():
         for e in errors:
             flash(e, "danger")
         return render_template("events/form.html", event=data, is_new=True)
-    return render_template("events/form.html", event={"has_booth": 1, "currency": "USD"}, is_new=True)
+    blank = {"name": None, "city": None, "address": None, "start_date": None, "end_date": None, "goal": None,
+             "has_booth": 1, "currency": "USD", "close_rate": None, "avg_deal": None}
+    return render_template("events/form.html", event=blank, is_new=True)
 
 
 @bp.route("/events/<int:event_id>/edit", methods=["GET", "POST"])

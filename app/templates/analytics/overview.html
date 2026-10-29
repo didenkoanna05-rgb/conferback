@@ -2,10 +2,7 @@
 {% import "_macros.html" as m with context %}
 {% block title %}Статистика{% endblock %}
 {% block content %}
-<div class="mb-3">
-  <h1 class="h3 mb-0">Статистика</h1>
-  <div class="text-body-secondary small">Усі події разом: які поїздки окупилися і де найдешевший кваліфікований лід</div>
-</div>
+{{ m.page_head('Статистика', 'Усі події разом: які поїздки окупилися і де найдешевший кваліфікований лід', 'bar-chart-line') }}
 
 <div class="kpi-grid mb-3">
   <div class="kpi"><i class="bi bi-wallet2"></i><div><div class="kpi-v">{{ totals.cost|money }}</div><div class="kpi-l">витрачено на події, що відбулися</div></div></div>
