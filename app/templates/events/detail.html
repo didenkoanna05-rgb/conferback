@@ -8,14 +8,14 @@
   {{ m.stat('Витрати', roi.cost|money(event.currency), 'за фактом' if roi.cost_is_final else 'частково за планом') }}
   {{ m.stat('Оцінка доцільності', (score.total ~ ' з ' ~ score.max) if score.scored else '—',
             score.verdict.text if score.verdict else ('оцінено ' ~ score.scored ~ ' з ' ~ score.n ~ ' критеріїв'),
-            score.verdict.tone if score.verdict else '') }}
+            score.verdict.tone if score.verdict else '', 'score') }}
   {{ m.stat('Контакти до події', dash.targets_total, dash.meetings_set ~ ' зустрічей домовлено') }}
   {% if phase == 'planned' %}
-  {{ m.stat('Прогноз результату', dash.forecast|money(event.currency) if dash.forecast is not none else '—',
-            'K·Ch·V − C, K = ' ~ dash.meetings_set if dash.forecast is not none else 'задайте параметри прогнозу',
-            ('success' if dash.forecast and dash.forecast > 0 else 'danger') if dash.forecast is not none else '') }}
+  {{ m.stat('Прогноз прибутку', dash.forecast|money(event.currency) if dash.forecast is not none else '—',
+            ('з ' ~ dash.meetings_set ~ ' домовлених зустрічей') if dash.forecast is not none else 'задайте частку угод і середню суму',
+            ('success' if dash.forecast and dash.forecast > 0 else 'danger') if dash.forecast is not none else '', 'forecast') }}
   {% else %}
-  {{ m.stat('Окупність (ROI)', roi.roi|num, roi.verdict, roi.tone) }}
+  {{ m.stat('Окупність (ROI)', roi.roi|num, roi.verdict, roi.tone, 'roi') }}
   {% endif %}
 </div>
 
@@ -81,12 +81,15 @@
         {% endfor %}
         <div class="score-result mt-3 p-3 rounded">
           <div class="d-flex justify-content-between flex-wrap gap-2">
-            <span>Пороги для {{ score.n }} критеріїв: <b>{{ score.high|num(1) }}</b> і <b>{{ score.low|num(1) }}</b></span>
+            <span>Сума балів: <b>{{ score.total }}</b> з {{ score.max }}</span>
             <span id="scoreVerdict" class="badge text-bg-{{ score.verdict.tone if score.verdict else 'secondary' }}">
               {{ score.verdict.text if score.verdict else 'оцініть усі критерії' }}
             </span>
           </div>
-          <div class="small text-body-secondary mt-1">S ≥ 3,5·n — участь рекомендовано; 2,5·n ≤ S &lt; 3,5·n — окремий розгляд; S &lt; 2,5·n — не рекомендовано.</div>
+          <div class="small text-body-secondary mt-1">
+            Від {{ score.high|num(0) }} балів — участь рекомендована; від {{ score.low|num(0) }} до {{ (score.high - 1)|num(0) }} — потрібне обговорення; менше {{ score.low|num(0) }} — участь не рекомендована.
+            {{ m.help('score') }}
+          </div>
         </div>
         {% if editable %}
         <button class="btn btn-primary mt-3 w-100">Зберегти оцінку</button>

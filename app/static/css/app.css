@@ -217,3 +217,14 @@ a.channel:hover { text-decoration: underline; }
 @media (min-width: 992px) { .deal-move { display: none; } .deal-card:hover .deal-move, .deal-card:focus-within .deal-move { display: block; } }
 .deal-col, .deal-card { min-width: 0; }
 @media (max-width: 767.98px) { .deal-board { grid-template-columns: 1fr; overflow: visible; } .deal-col { min-height: 0; } }
+
+/* ---- Фільтри подій, підказки, формули ---- */
+.filter-label { font-size: .8rem; font-weight: 600; color: var(--bs-secondary-color); margin-bottom: .35rem; display: block; }
+.help-tip { color: var(--bs-secondary-color); text-decoration: none; font-weight: normal; }
+.help-tip:hover { color: var(--bs-primary); }
+.formula-toc { display: flex; flex-wrap: wrap; gap: .4rem; }
+.formula-card { scroll-margin-top: 5rem; }
+.formula-card .formula { background: #f2f5fa; border-left: 3px solid var(--bs-primary); padding: .6rem .8rem; border-radius: .4rem; font-weight: 600; }
+.formula-card .example { background: #fff8e6; padding: .5rem .75rem; border-radius: .4rem; }
+.cost-line + .cost-line { margin-top: 0; }
+.queue-day { background: #f2f5fa; font-size: .8rem; font-weight: 600; color: var(--bs-secondary-color); padding-top: .35rem; padding-bottom: .35rem; }

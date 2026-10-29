@@ -37,7 +37,9 @@
         <i class="bi bi-geo-alt"></i> {{ event.city or '—' }}
         <span class="mx-1">·</span><i class="bi bi-calendar3"></i> {{ event.start_date|d }} – {{ event.end_date|d }}
         <span class="mx-1">·</span>{{ 'зі стендом' if event.has_booth else 'без стенда' }}
-        <span class="ms-1">{{ badge(refs.PHASES[phase]) }}</span>
+        {% set st = refs.EVENT_STATUSES[event_status(event)] %}
+        <span class="ms-1 badge text-bg-{{ st[1] }}" title="{{ st[2] }}">{{ st[0] }}</span>
+        {% if event.address %}<div class="mt-1"><i class="bi bi-pin-map"></i> {{ event.address }}</div>{% endif %}
       </div>
     </div>
     {% if can('lead_capture') and phase != 'finished' %}
@@ -59,9 +61,13 @@
 </div>
 {% endmacro %}
 
-{% macro stat(label, value, hint='', tone='') %}
+{% macro help(key) -%}
+  <a href="{{ url_for('events.formulas') }}#{{ key }}" class="help-tip" data-bs-toggle="tooltip" data-bs-title="{{ formulas[key].short }}" aria-label="Як рахується: {{ formulas[key].title }}"><i class="bi bi-question-circle"></i></a>
+{%- endmacro %}
+
+{% macro stat(label, value, hint='', tone='', tip=None) %}
 <div class="stat {{ 'stat-' ~ tone if tone }}">
-  <div class="stat-label">{{ label }}</div>
+  <div class="stat-label">{{ label }}{% if tip %} {{ help(tip) }}{% endif %}</div>
   <div class="stat-value">{{ value }}</div>
   {% if hint %}<div class="stat-hint">{{ hint }}</div>{% endif %}
 </div>

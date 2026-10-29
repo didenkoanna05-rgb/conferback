@@ -16,6 +16,11 @@
           <label class="form-label" for="city">Місто</label>
           <input class="form-control" id="city" name="city" value="{{ event.city or '' }}" maxlength="100">
         </div>
+        <div class="col-12 col-md-8">
+          <label class="form-label" for="address">Адреса місця проведення</label>
+          <input class="form-control" id="address" name="address" value="{{ event.address or '' }}" maxlength="300" placeholder="Наприклад, FIL, Rossio dos Olivais">
+        </div>
+        <div class="d-none d-md-block col-md-4"></div>
         <div class="col-6 col-md-4">
           <label class="form-label" for="start_date">Початок *</label>
           <input class="form-control" type="date" id="start_date" name="start_date" value="{{ event.start_date or '' }}" required>

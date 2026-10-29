@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Як рахуємо{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-9">
+    <h1 class="h3 mb-1">Як рахуються показники</h1>
+    <p class="text-body-secondary">Усі формули системи простими словами. Біля кожного показника на сайті є значок <i class="bi bi-question-circle"></i>: наведіть на нього, щоб побачити коротке пояснення, або натисніть, щоб відкрити цю сторінку.</p>
+    <nav class="formula-toc mb-4">
+      {% for key, f in formulas.items() %}<a class="chip" href="#{{ key }}">{{ f.title }}</a>{% endfor %}
+    </nav>
+    {% for key, f in formulas.items() %}
+    <section class="card mb-3 formula-card" id="{{ key }}">
+      <div class="card-body">
+        <h2 class="h5">{{ f.title }}</h2>
+        <p class="mb-2">{{ f.short }}</p>
+        <div class="formula mb-3">{{ f.formula }}</div>
+        {% if f.terms %}
+        <dl class="row small mb-2">
+          {% for term, meaning in f.terms %}<dt class="col-sm-4">{{ term }}</dt><dd class="col-sm-8">{{ meaning }}</dd>{% endfor %}
+        </dl>
+        {% endif %}
+        {% if f.reading %}
+        <div class="small fw-semibold mb-1">Як читати результат</div>
+        <ul class="list-unstyled small mb-2">
+          {% for tone, label, text in f.reading %}<li class="mb-1"><span class="badge text-bg-{{ tone }}">{{ label }}</span> {{ text }}</li>{% endfor %}
+        </ul>
+        {% endif %}
+        <div class="example small"><i class="bi bi-lightbulb"></i> <b>Приклад.</b> {{ f.example }}</div>
+      </div>
+    </section>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -5,16 +5,18 @@
 """
 from datetime import date, timedelta
 
+from . import refs
+
 # Формула (3.4): через скільки днів після розмови робити фолоу-ап
 # залежно від рівня зацікавленості (3 — гарячий, 1 — холодний).
 FOLLOWUP_DELAY_DAYS = {3: 0, 2: 2, 1: 14}
 
-# Таблиця 3.8: верхня межа діапазону, висновок, колір позначки.
+# Таблиця 3.8: верхня межа діапазону і код статусу окупності (назви в refs.ROI_STATUSES).
 ROI_BANDS = [
-    (1, "витрати не повернулися", "danger"),
-    (3, "витрати повернулися, але результат нижчий за норму", "warning"),
-    (5, "результат у межах норми", "success"),
-    (float("inf"), "результат вищий за норму", "primary"),
+    (1, "loss"),
+    (3, "low"),
+    (5, "norm"),
+    (float("inf"), "high"),
 ]
 
 # Формула (3.3): пороги як середній бал на один критерій.
@@ -39,14 +41,20 @@ def roi(revenue_new, revenue_accelerated, cost):
     return (revenue_new + revenue_accelerated) / cost
 
 
-def roi_verdict(value):
-    """Текстовий висновок і колір для коефіцієнта окупності (табл. 3.8)."""
+def roi_status(value):
+    """Код статусу окупності для коефіцієнта ROI (табл. 3.8)."""
     if value is None:
-        return "витрати ще не внесено", "secondary"
-    for limit, text, tone in ROI_BANDS:
+        return "none"
+    for limit, code in ROI_BANDS:
         if value < limit:
-            return text, tone
-    return ROI_BANDS[-1][1], ROI_BANDS[-1][2]
+            return code
+    return ROI_BANDS[-1][1]
+
+
+def roi_verdict(value):
+    """Назва статусу окупності і колір позначки."""
+    label, tone, _hint = refs.ROI_STATUSES[roi_status(value)]
+    return label, tone
 
 
 def forecast(meetings, close_rate, avg_deal, cost):
@@ -61,10 +69,13 @@ def score_verdict(total, n):
     if n <= 0:
         return None
     if total >= SCORE_HIGH * n:
-        return {"code": "go", "text": "участь рекомендовано", "tone": "success"}
-    if total >= SCORE_LOW * n:
-        return {"code": "review", "text": "окремий розгляд", "tone": "warning"}
-    return {"code": "no", "text": "участь не рекомендовано", "tone": "danger"}
+        code = "go"
+    elif total >= SCORE_LOW * n:
+        code = "review"
+    else:
+        code = "no"
+    text, tone = refs.RECOMMENDATIONS[code]
+    return {"code": code, "text": text, "tone": tone}
 
 
 def score_thresholds(n):

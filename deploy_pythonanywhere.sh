@@ -2,6 +2,8 @@
 # Встановлення і оновлення ConferBack на PythonAnywhere.
 # Запуск у Bash-консолі PythonAnywhere:
 #   curl -sL https://raw.githubusercontent.com/didenkoanna05-rgb/conferback/main/deploy_pythonanywhere.sh | bash
+# Оновлення із заміною всіх даних на свіжі демонстраційні:
+#   curl -sL https://raw.githubusercontent.com/didenkoanna05-rgb/conferback/main/deploy_pythonanywhere.sh | bash -s -- --reset-demo
 set -e
 REPO=https://github.com/didenkoanna05-rgb/conferback.git
 DIR="$HOME/conferback"
@@ -18,13 +20,13 @@ else
   echo "Завантажую код..."; git clone -q "$REPO" "$DIR"
 fi
 
-echo "Встановлюю Flask..."
+echo "Встановлюю бібліотеки..."
 for v in 3.10 3.11 3.12 3.13; do
-  if command -v "python$v" >/dev/null; then "python$v" -m pip install -q --user "Flask>=3.0,<4" 2>/dev/null || true; fi
+  if command -v "python$v" >/dev/null; then "python$v" -m pip install -q --user -r "$DIR/requirements.txt" 2>/dev/null || true; fi
 done
 
 cd "$DIR"
-if [ ! -f instance/conferback.sqlite ]; then
+if [ ! -f instance/conferback.sqlite ] || [ "$1" = "--reset-demo" ]; then
   echo "Створюю базу з демонстраційними даними..."; python3 seed_demo.py --yes
 fi
 

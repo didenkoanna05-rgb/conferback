@@ -10,6 +10,68 @@
   {% endfor %}
 </div>
 
+{% if can('lead_import') %}
+<div class="d-flex flex-wrap gap-2 mb-3">
+  <button class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addLead"><i class="bi bi-person-plus"></i> Додати ліда</button>
+  <button class="btn btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#importLeads"><i class="bi bi-upload"></i> Імпорт з файлу</button>
+</div>
+
+<div class="collapse mb-3" id="addLead">
+  <form method="post" action="{{ url_for('leads.add_lead', event_id=event.id) }}" class="card card-body">
+    {{ m.csrf() }}
+    <p class="small text-body-secondary mb-2">Для контактів, яких не записали під час розмови: візитки, листування, знайомство на вечірці.</p>
+    <div class="row g-2">
+      <div class="col-12 col-md-4"><input class="form-control" name="full_name" placeholder="Ім'я та прізвище *" required></div>
+      <div class="col-12 col-md-4"><input class="form-control" name="company" placeholder="Компанія"></div>
+      <div class="col-12 col-md-4"><input class="form-control" name="position" placeholder="Посада"></div>
+      <div class="col-12 col-md-4"><input class="form-control" type="email" name="email" placeholder="E-mail"></div>
+      <div class="col-12 col-md-4"><input class="form-control" type="tel" name="phone" placeholder="Телефон / WhatsApp"></div>
+      <div class="col-12 col-md-4"><input class="form-control" type="url" name="linkedin_url" placeholder="Посилання на LinkedIn"></div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Зацікавленість {{ m.help('followup') }}</label>
+        <select class="form-select" name="intent">{% for v in (3, 2, 1) %}<option value="{{ v }}" {{ 'selected' if v == 2 }}>{{ refs.INTENT_LABELS[v] }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Канал зв'язку</label>
+        <select class="form-select" name="channel">{% for k, (label, icon) in refs.CHANNELS.items() %}<option value="{{ k }}" {{ 'selected' if k == 'email' }}>{{ label }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Звідки контакт</label>
+        <select class="form-select" name="source">{% for k, v in refs.LEAD_SOURCES.items() %}<option value="{{ k }}" {{ 'selected' if k == 'business_cards' }}>{{ v }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-6 col-md-3">
+        <label class="form-label small mb-1">Відповідальний</label>
+        <select class="form-select" name="owner_id"><option value="">—</option>{% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if current_user.id == u.id }}>{{ u.full_name }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12"><textarea class="form-control" name="details" rows="2" placeholder="Про що говорили, що їм потрібно"></textarea></div>
+      <div class="col-12"><button class="btn btn-primary">Додати ліда</button></div>
+    </div>
+  </form>
+</div>
+
+<div class="collapse mb-3" id="importLeads">
+  <form method="post" action="{{ url_for('leads.import_leads', event_id=event.id) }}" enctype="multipart/form-data" class="card card-body">
+    {{ m.csrf() }}
+    <p class="small mb-2"><b>Звідки файл:</b> вивантаження сканера бейджів на стенді, список контактів із застосунку конференції, перелік від організатора або таблиця з візитками.</p>
+    <p class="small text-body-secondary mb-2">Підходить файл Excel (.xlsx) або CSV. Система сама впізнає стовпці за заголовками: ім'я, компанія, посада, e-mail, телефон, LinkedIn, зацікавленість (гарячий, теплий, холодний), нотатка. Обов'язкове лише ім'я. Повтори не додаються.
+      <a href="{{ url_for('leads.import_template') }}"><i class="bi bi-download"></i> Завантажити зразок файлу</a></p>
+    <div class="row g-2">
+      <div class="col-12 col-md-5"><input class="form-control" type="file" name="file" accept=".csv,.txt,.xlsx,text/csv" aria-label="Файл"></div>
+      <div class="col-12 col-md-3">
+        <select class="form-select" name="source" aria-label="Джерело">{% for k, v in refs.LEAD_SOURCES.items() if k != 'manual' %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-2">
+        <select class="form-select" name="owner_id" aria-label="Відповідальний"><option value="">Відповідальний: —</option>{% for u in managers %}<option value="{{ u.id }}">{{ u.full_name }}</option>{% endfor %}</select>
+      </div>
+      <div class="col-12 col-md-2"><button class="btn btn-primary w-100">Імпортувати</button></div>
+    </div>
+    <details class="mt-2 small"><summary>Або вставити рядки з таблиці</summary>
+      <textarea class="form-control font-monospace small mt-2" name="text" rows="4" placeholder="Olena Koval;FinPay;CTO;olena@finpay.example"></textarea>
+    </details>
+  </form>
+</div>
+{% endif %}
+
 <form class="row g-2 mb-3" method="get">
   <input type="hidden" name="view" value="{{ view }}">
   <div class="col-12 col-md-4"><input class="form-control" type="search" name="q" value="{{ q }}" placeholder="Пошук за ім'ям чи компанією"></div>
@@ -47,7 +109,7 @@
           <td>
             <a class="fw-semibold text-decoration-none" href="{{ url_for('leads.detail', lead_id=l.id) }}">{{ l.full_name }}</a>
             {% if l.target_id and l.met %}<i class="bi bi-star-fill text-warning" title="Зустріч із цільового списку"></i>{% endif %}
-            <div class="small text-body-secondary">{{ l.company or '' }}</div>
+            <div class="small text-body-secondary">{{ l.company or '' }}{% if l.source %} · <i class="bi bi-upload"></i> {{ refs.LEAD_SOURCES[l.source]|lower }}{% endif %}</div>
           </td>
           <td>{{ m.channel(l.channel, l.linkedin_url if l.channel == 'linkedin' else (('mailto:' ~ l.email) if l.channel == 'email' and l.email else None), label=true) if l.channel else '—' }}</td>
           <td>{{ m.intent_badge(l.intent) if l.met else m.intent_badge(none) }}</td>

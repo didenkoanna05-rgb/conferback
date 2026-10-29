@@ -6,7 +6,7 @@ from datetime import date, datetime, timedelta
 
 from flask import Flask, g, render_template, send_from_directory
 
-from . import auth, calc, db, refs
+from . import auth, calc, db, formulas, refs, stats
 
 MONTHS = ["січ", "лют", "бер", "квіт", "трав", "черв", "лип", "серп", "вер", "жовт", "лист", "груд"]
 
@@ -135,4 +135,7 @@ def _register_helpers(app):
             "calc": calc,
             "today": date.today(),
             "current_user": g.get("user"),
+            "event_status": stats.event_status,
+            "formulas": formulas.FORMULAS,
+            "date_of": lambda s: date.fromisoformat(str(s)[:10]),
         }

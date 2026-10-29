@@ -22,18 +22,18 @@ def test_roi_control_example():
     # Контрольний приклад Money20/20: (86 000 + 49 000) / 27 300 = 4,95
     value = calc.roi(86000, 49000, 27300)
     assert round(value, 2) == 4.95
-    assert calc.roi_verdict(value)[0] == "результат у межах норми"
+    assert calc.roi_status(value) == "norm"
 
 
-@pytest.mark.parametrize("value, text", [
-    (0.5, "витрати не повернулися"),
-    (1.0, "витрати повернулися, але результат нижчий за норму"),
-    (3.0, "результат у межах норми"),
-    (5.1, "результат вищий за норму"),
-    (None, "витрати ще не внесено"),
+@pytest.mark.parametrize("value, code", [
+    (0.5, "loss"),
+    (1.0, "low"),
+    (3.0, "norm"),
+    (5.1, "high"),
+    (None, "none"),
 ])
-def test_roi_bands(value, text):
-    assert calc.roi_verdict(value)[0] == text
+def test_roi_bands(value, code):
+    assert calc.roi_status(value) == code
 
 
 def test_roi_without_costs():
@@ -129,3 +129,22 @@ def test_sync_is_idempotent_and_tolerates_bad_records(app):
         assert hot["due_date"] == "2026-11-10"   # гарячий лід — фолоу-ап того ж дня
         assert query("SELECT status FROM targets WHERE id = 1", one=True)["status"] == "met"
         assert query("SELECT channel FROM leads WHERE client_uid = 'u3'", one=True)["channel"] == "email"
+
+
+def test_import_leads_with_header():
+    from app import importer
+    rows = importer.rows_from_text(
+        "First Name,Last Name,Company Name,Job Title,Email Address,Lead Rating,Notes\n"
+        "Olena,Koval,FinPay,CTO,olena@finpay.example,Hot,Demo please\n"
+        ",,NoName Ltd,,,,\n")
+    leads, skipped = importer.parse_leads(rows)
+    assert skipped == 1
+    assert leads[0]["full_name"] == "Olena Koval"
+    assert leads[0]["company"] == "FinPay" and leads[0]["intent"] == 3 and leads[0]["channel"] == "email"
+
+
+def test_import_leads_without_header():
+    from app import importer
+    leads, _ = importer.parse_leads(importer.rows_from_text("James Smith;NordPay;CIO;https://linkedin.com/in/js\n"))
+    assert leads[0]["linkedin_url"] == "https://linkedin.com/in/js" and leads[0]["intent"] == 2
+    assert leads[0]["channel"] == "linkedin"

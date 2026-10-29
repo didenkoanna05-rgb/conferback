@@ -16,7 +16,7 @@
             'перевитрата' if diff > 0 else ('економія' if diff < 0 else 'точно за планом'),
             'danger' if diff > 0 else 'success') }}
   {% endif %}
-  {{ m.stat('Сума для окупності (C)', totals.total|money(cur), 'факт, а де його нема — план', 'primary') }}
+  {{ m.stat('Сума для окупності', totals.total|money(cur), 'факт, а де його нема — план', 'primary', 'roi') }}
 </div>
 
 <div class="row g-3 mb-3">

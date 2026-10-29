@@ -45,7 +45,7 @@
         <label class="form-label small mb-1">Відповідальний</label>
         <select class="form-select" name="owner_id"><option value="">—</option>{% for u in managers %}<option value="{{ u.id }}" {{ 'selected' if current_user.id == u.id }}>{{ u.full_name }}</option>{% endfor %}</select>
       </div>
-      <div class="col-12 col-md-8"><label class="form-label small mb-1">Нотатка</label><input class="form-control" name="note" placeholder="Чому ця людина важлива"></div>
+      <div class="col-12 col-md-8"><label class="form-label small mb-1">Мета контакту</label><input class="form-control" name="note" placeholder="Що хочемо обговорити, наприклад: шукають платіжного провайдера на 2027 рік"></div>
       <div class="col-12"><button class="btn btn-primary">Додати</button></div>
     </div>
   </form>
@@ -86,7 +86,7 @@
               {% if t.contacted_at %} · написали {{ t.contacted_at|d(short=true) }}{% endif %}
             </div>
             {% if t.meeting_at %}<div class="small mt-1 text-warning-emphasis"><i class="bi bi-star-fill text-warning"></i> {{ t.meeting_at|dt }}{% if t.meeting_place %} · {{ t.meeting_place }}{% endif %}</div>{% endif %}
-            {% if t.note %}<div class="small mt-1">{{ t.note }}</div>{% endif %}
+            {% if t.note %}<div class="small mt-1"><i class="bi bi-bullseye text-body-secondary" title="Мета контакту"></i> {{ t.note }}</div>{% endif %}
           </div>
         </div>
         {% if can('targets_edit') %}

@@ -11,8 +11,35 @@ bp = Blueprint("events", __name__)
 
 @bp.route("/")
 def index():
-    cards = stats.event_cards()
-    return render_template("events/index.html", cards=cards)
+    """Перелік подій з фільтрами за статусом, рекомендацією та окупністю."""
+    all_cards = stats.event_cards()
+    filters = {
+        "status": request.args.get("status") if request.args.get("status") in refs.EVENT_STATUSES else None,
+        "rec": request.args.get("rec") if request.args.get("rec") in refs.RECOMMENDATIONS else None,
+        "roi": request.args.get("roi") if request.args.get("roi") in refs.ROI_STATUSES else None,
+    }
+    cards = all_cards
+    if filters["status"]:
+        cards = [c for c in cards if c["status"] == filters["status"]]
+    if filters["rec"]:
+        cards = [c for c in cards if c["status"] == "planned" and c["recommendation"] == filters["rec"]]
+    if filters["roi"]:
+        cards = [c for c in cards if c["roi_status"] == filters["roi"]]
+    counts = {
+        "status": {k: sum(1 for c in all_cards if c["status"] == k) for k in refs.EVENT_STATUSES},
+        "rec": {k: sum(1 for c in all_cards if c["status"] == "planned" and c["recommendation"] == k)
+                for k in refs.RECOMMENDATIONS},
+        "roi": {k: sum(1 for c in all_cards if c["roi_status"] == k) for k in refs.ROI_STATUSES},
+    }
+    categories = query("SELECT * FROM cost_categories WHERE is_active = 1 ORDER BY id")
+    return render_template("events/index.html", cards=cards, total=len(all_cards), filters=filters,
+                           counts=counts, categories=categories)
+
+
+@bp.route("/formulas")
+def formulas():
+    """Пояснення всіх формул і показників простими словами."""
+    return render_template("events/formulas.html")
 
 
 @bp.route("/capture")
@@ -31,6 +58,7 @@ def _read_event_form():
     data = {
         "name": clean(f.get("name"), 200),
         "city": clean(f.get("city"), 100),
+        "address": clean(f.get("address"), 300),
         "start_date": parse_date(f.get("start_date")),
         "end_date": parse_date(f.get("end_date")),
         "goal": clean(f.get("goal"), 2000),
@@ -52,6 +80,23 @@ def _read_event_form():
     return data, errors
 
 
+def _save_initial_costs(event_id):
+    """Планові витрати з вікна «Нова подія»: рядки категорія + опис + сума."""
+    cats = request.form.getlist("cost_category")
+    descs = request.form.getlist("cost_description")
+    sums = request.form.getlist("cost_planned")
+    valid = {r["id"] for r in query("SELECT id FROM cost_categories")}
+    added = 0
+    for cat, desc, amount in zip(cats, descs, sums):
+        cat_id = parse_int(cat, 1, 10**9)
+        planned = parse_amount(amount) if (amount or "").strip() else None
+        if cat_id in valid and planned:
+            execute("INSERT INTO cost_items (event_id, category_id, description, planned) VALUES (?, ?, ?, ?)",
+                    (event_id, cat_id, clean(desc, 300), planned))
+            added += 1
+    return added
+
+
 @bp.route("/events/new", methods=["GET", "POST"])
 @require("event_edit")
 def new():
@@ -59,10 +104,12 @@ def new():
         data, errors = _read_event_form()
         if not errors:
             eid = execute(
-                "INSERT INTO events (name, city, start_date, end_date, goal, has_booth, currency, close_rate, avg_deal) "
-                "VALUES (:name, :city, :start_date, :end_date, :goal, :has_booth, :currency, :close_rate, :avg_deal)",
-                data)
-            flash("Кампанію створено. Додайте кошторис і оцініть доцільність участі.", "success")
+                "INSERT INTO events (name, city, address, start_date, end_date, goal, has_booth, currency, "
+                "close_rate, avg_deal) VALUES (:name, :city, :address, :start_date, :end_date, :goal, :has_booth, "
+                ":currency, :close_rate, :avg_deal)", data)
+            added = _save_initial_costs(eid)
+            flash("Подію створено." + (f" Додано витрат: {added}." if added else " Додайте витрати.")
+                  + " Далі оцініть доцільність участі.", "success")
             return redirect(url_for("events.detail", event_id=eid))
         for e in errors:
             flash(e, "danger")
@@ -79,7 +126,7 @@ def edit(event_id):
         if not errors:
             data["id"] = event_id
             execute(
-                "UPDATE events SET name = :name, city = :city, start_date = :start_date, end_date = :end_date, "
+                "UPDATE events SET name = :name, city = :city, address = :address, start_date = :start_date, end_date = :end_date, "
                 "goal = :goal, has_booth = :has_booth, currency = :currency, close_rate = :close_rate, "
                 "avg_deal = :avg_deal WHERE id = :id", data)
             flash("Зміни збережено.", "success")

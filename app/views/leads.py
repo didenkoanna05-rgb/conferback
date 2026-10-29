@@ -3,10 +3,10 @@ import sqlite3
 import uuid
 from datetime import date, datetime, timedelta
 
-from flask import (Blueprint, abort, flash, g, jsonify, redirect, render_template,
+from flask import (Blueprint, Response, abort, flash, g, jsonify, redirect, render_template,
                    request, url_for)
 
-from .. import calc, refs, stats
+from .. import calc, importer, refs, stats
 from ..auth import can, require
 from ..db import execute, get_db, query
 from . import clean, get_event, parse_amount, parse_date, parse_int, users_with_role
@@ -195,7 +195,7 @@ def event_leads(event_id):
         (event_id,), one=True)
     return render_template("leads/list.html", event=event, phase=stats.event_phase(event), leads=leads,
                            missed=missed, view=view, channel=channel, status=status, q=q, counts=counts,
-                           tab="leads")
+                           managers=users_with_role("manager"), tab="leads")
 
 
 def take_target(target, user_id):
@@ -424,3 +424,85 @@ def move_deal(deal_id):
     flash(f"Угода з {lead['full_name']}: {refs.DEAL_STAGES[stage][0].lower()}.", "success")
     back = request.form.get("back") or url_for("leads.deals")
     return redirect(back if back.startswith("/") and not back.startswith("//") else url_for("leads.deals"))
+
+
+def _store_lead(event_id, data, source):
+    """Збереження ліда, внесеного вручну або з файлу: дата фолоу-апу рахується від сьогодні."""
+    data = dict(data)
+    data.pop("captured_at", None)
+    lead_id = save_lead(event_id, data, g.user["id"])
+    execute("UPDATE leads SET source = ? WHERE id = ?", (source, lead_id))
+    return lead_id
+
+
+@bp.route("/events/<int:event_id>/leads/new", methods=["POST"])
+@require("lead_import")
+def add_lead(event_id):
+    """Додавання ліда вручну, наприклад з візитки, яку не встигли внести на події."""
+    get_event(event_id)
+    source = request.form.get("source") if request.form.get("source") in refs.LEAD_SOURCES else "manual"
+    try:
+        lead_id = _store_lead(event_id, request.form, source)
+        flash("Ліда додано. Дату першого листа визначено за рівнем зацікавленості.", "success")
+        return redirect(url_for("leads.detail", lead_id=lead_id))
+    except (ValueError, sqlite3.IntegrityError) as e:
+        flash(str(e), "danger")
+        return redirect(url_for("leads.event_leads", event_id=event_id))
+
+
+@bp.route("/events/<int:event_id>/leads/import", methods=["POST"])
+@require("lead_import")
+def import_leads(event_id):
+    """Імпорт лідів з файлу (CSV, Excel) або з рядків, вставлених з таблиці."""
+    get_event(event_id)
+    source = request.form.get("source") if request.form.get("source") in refs.LEAD_SOURCES else "badge_scan"
+    upload = request.files.get("file")
+    try:
+        if upload and upload.filename:
+            raw = upload.read()
+            if upload.filename.lower().endswith((".xlsx", ".xlsm")):
+                rows = importer.rows_from_xlsx(raw)
+            else:
+                try:
+                    text = raw.decode("utf-8-sig")
+                except UnicodeDecodeError:
+                    text = raw.decode("cp1251", errors="replace")
+                rows = importer.rows_from_text(text)
+        else:
+            rows = importer.rows_from_text(request.form.get("text", ""))
+    except Exception:  # пошкоджений файл або не той формат
+        flash("Не вдалося прочитати файл. Збережіть таблицю як CSV або Excel (.xlsx) і спробуйте ще раз.", "danger")
+        return redirect(url_for("leads.event_leads", event_id=event_id))
+
+    items, skipped = importer.parse_leads(rows)
+    existing = {((r["full_name"] or "").lower(), (r["company"] or "").lower())
+                for r in query("SELECT full_name, company FROM leads WHERE event_id = ?", (event_id,))}
+    owner = request.form.get("owner_id")
+    added = dup = 0
+    for item in items:
+        key = (item["full_name"].lower(), (item["company"] or "").lower())
+        if key in existing:
+            dup += 1
+            continue
+        existing.add(key)
+        item["owner_id"] = owner
+        _store_lead(event_id, item, source)
+        added += 1
+    parts = [f"Імпортовано лідів: {added}."]
+    if dup:
+        parts.append(f"Уже були в списку: {dup}.")
+    if skipped:
+        parts.append(f"Пропущено рядків без імені: {skipped}.")
+    flash(" ".join(parts), "success" if added else "warning")
+    return redirect(url_for("leads.event_leads", event_id=event_id))
+
+
+@bp.route("/leads/import-template.csv")
+def import_template():
+    """Зразок файлу для імпорту лідів."""
+    text = ("Ім'я та прізвище;Компанія;Посада;E-mail;Телефон;LinkedIn;Зацікавленість;Нотатка\n"
+            "Olena Koval;FinPay;CTO;olena@finpay.example;+380501112233;;гарячий;Просила демо на наступному тижні\n"
+            "James Smith;NordPay;Head of Payments;james@nordpay.example;;https://www.linkedin.com/in/james-smith;"
+            "теплий;Бюджет на наступний рік\n")
+    return Response("﻿" + text, mimetype="text/csv",
+                    headers={"Content-Disposition": "attachment; filename=conferback-leads-template.csv"})

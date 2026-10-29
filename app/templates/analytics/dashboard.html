@@ -9,10 +9,10 @@
 <div class="kpi-grid mb-3">
   <div class="kpi"><i class="bi bi-chat-square-text"></i><div><div class="kpi-v">{{ dash.leads_total }}</div><div class="kpi-l">розмов на події</div></div></div>
   <div class="kpi"><i class="bi bi-patch-check"></i><div><div class="kpi-v">{{ dash.qualified }} <small>{{ dash.qualified_share|pct }}</small></div><div class="kpi-l">кваліфікованих лідів</div></div></div>
-  <div class="kpi"><i class="bi bi-star"></i><div><div class="kpi-v">{{ dash.meetings_held }} <small>з {{ dash.meetings_set }}</small></div><div class="kpi-l">домовлених зустрічей відбулося</div></div></div>
-  <div class="kpi"><i class="bi bi-reply"></i><div><div class="kpi-v">{{ dash.reply_rate|pct }}</div><div class="kpi-l">відповіли на повідомлення</div></div></div>
-  <div class="kpi"><i class="bi bi-cash-coin"></i><div><div class="kpi-v">{{ dash.cost_per_qualified|money(cur) }}</div><div class="kpi-l">вартість кваліфікованого ліда</div></div></div>
-  <div class="kpi kpi-roi kpi-{{ r.tone }}"><i class="bi bi-graph-up-arrow"></i><div><div class="kpi-v">{{ r.roi|num }}</div><div class="kpi-l">ROI · {{ r.verdict }}</div></div></div>
+  <div class="kpi"><i class="bi bi-star"></i><div><div class="kpi-v">{{ dash.meetings_held }} <small>з {{ dash.meetings_set }}</small></div><div class="kpi-l">домовлених зустрічей відбулося {{ m.help('meeting_rate') }}</div></div></div>
+  <div class="kpi"><i class="bi bi-reply"></i><div><div class="kpi-v">{{ dash.reply_rate|pct }}</div><div class="kpi-l">відповіли на повідомлення {{ m.help('reply_rate') }}</div></div></div>
+  <div class="kpi"><i class="bi bi-cash-coin"></i><div><div class="kpi-v">{{ dash.cost_per_qualified|money(cur) }}</div><div class="kpi-l">вартість кваліфікованого ліда {{ m.help('cost_per_lead') }}</div></div></div>
+  <div class="kpi kpi-roi kpi-{{ r.tone }}"><i class="bi bi-graph-up-arrow"></i><div><div class="kpi-v">{{ r.roi|num }}</div><div class="kpi-l">ROI · {{ r.verdict }} {{ m.help('roi') }}</div></div></div>
 </div>
 
 <h2 class="stage-title"><span class="stage-num">1</span> До події: підготовка</h2>
@@ -63,7 +63,7 @@
         <div class="kv"><span>Укладено угод</span><b>{{ r.deals }}</b></div>
         <div class="kv"><span>Угоди в роботі</span><b>{{ dash.open_deals }} · {{ dash.pipeline|money(cur) }}</b></div>
         {% if dash.forecast is not none and phase == 'planned' %}
-        <div class="kv"><span>Прогноз P</span><b>{{ dash.forecast|money(cur) }}</b></div>
+        <div class="kv"><span>Прогноз прибутку {{ m.help('forecast') }}</span><b>{{ dash.forecast|money(cur) }}</b></div>
         {% endif %}
         {% if can('export') %}<a class="btn btn-sm btn-outline-success w-100 mt-3" href="{{ url_for('analytics.export_csv', event_id=event.id) }}"><i class="bi bi-filetype-csv"></i> Ліди в CSV</a>{% endif %}
       </div></div>

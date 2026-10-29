@@ -25,13 +25,14 @@
           <div class="fw-semibold">{{ r.verdict }}</div>
         </div>
         <div class="col-12 col-md-7">
-          <div class="formula">ROI = (D<sub>new</sub> + D<sub>acc</sub>) / C
-            {% if r.roi is not none %}= ({{ r.revenue_new|money(cur) }} + {{ r.revenue_accelerated|money(cur) }}) / {{ r.cost|money(cur) }}{% endif %}</div>
+          <div class="formula">ROI = (нові клієнти + прискорені угоди) ÷ витрати
+            {% if r.roi is not none %}<br>= ({{ r.revenue_new|money(cur) }} + {{ r.revenue_accelerated|money(cur) }}) ÷ {{ r.cost|money(cur) }}{% endif %}
+            <span class="d-print-none">{{ m.help('roi') }}</span></div>
           <div class="small text-body-secondary mt-2">
             {% if r.roi is none %}Внесіть кошторис, щоб обчислити окупність.
             {% elif r.roi < 1 %}Повернулося {{ (r.roi * 100)|round|int }} % вкладеного.
             {% else %}Кожна вкладена одиниця повернулася {{ r.roi|num }} раза.{% endif %}
-            Норма для галузі — від 3 до 5.
+            Норма для B2B-подій — від 3 до 5.
           </div>
         </div>
       </div>
@@ -48,15 +49,15 @@
             <tr><td class="text-body-secondary">Кошторис порожній</td></tr>
           {% endfor %}
           </tbody>
-          <tfoot><tr class="fw-semibold"><td>Разом (C){% if not r.cost_is_final %}<div class="small fw-normal text-body-secondary">частина сум ще планові</div>{% endif %}</td><td></td><td class="text-end text-nowrap">{{ r.cost|money(cur) }}</td></tr></tfoot>
+          <tfoot><tr class="fw-semibold"><td>Разом{% if not r.cost_is_final %}<div class="small fw-normal text-body-secondary">частина сум ще планові</div>{% endif %}</td><td></td><td class="text-end text-nowrap">{{ r.cost|money(cur) }}</td></tr></tfoot>
         </table>
       </section>
       <section class="col-12 col-md-6">
         <h3 class="h6">Дохід за типами</h3>
         <table class="table table-sm">
           <tbody>
-            <tr><td>Нові ліди (D<sub>new</sub>)</td><td class="text-end text-nowrap">{{ r.revenue_new|money(cur) }}</td></tr>
-            <tr><td>Прискорені угоди (D<sub>acc</sub>)</td><td class="text-end text-nowrap">{{ r.revenue_accelerated|money(cur) }}</td></tr>
+            <tr><td>Нові клієнти</td><td class="text-end text-nowrap">{{ r.revenue_new|money(cur) }}</td></tr>
+            <tr><td>Прискорені угоди</td><td class="text-end text-nowrap">{{ r.revenue_accelerated|money(cur) }}</td></tr>
           </tbody>
           <tfoot><tr class="fw-semibold"><td>Разом</td><td class="text-end text-nowrap">{{ r.revenue|money(cur) }}</td></tr></tfoot>
         </table>

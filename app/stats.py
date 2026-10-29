@@ -20,6 +20,24 @@ def event_phase(event, today=None):
     return "ongoing"
 
 
+def event_status(event, today=None):
+    """Статус для користувача: запланована, в роботі, завершена.
+
+    Минула подія лишається «в роботі», доки є ліди, яким ще треба написати,
+    або угоди на етапі переговорів.
+    """
+    phase = event_phase(event, today)
+    if phase == "planned":
+        return "planned"
+    if phase == "ongoing":
+        return "in_work"
+    open_work = query(
+        "SELECT 1 FROM leads l LEFT JOIN deals d ON d.lead_id = l.id WHERE l.event_id = ? "
+        "AND (l.status IN ('new', 'in_progress') OR d.stage IN ('negotiation', 'proposal')) LIMIT 1",
+        (event["id"],), one=True)
+    return "in_work" if open_work else "done"
+
+
 def cost_totals(event_id):
     """Витрати на подію: план, факт і сума для розрахунку окупності (ФВ-03)."""
     row = query(
@@ -72,6 +90,7 @@ def roi_summary(event_id):
         "revenue": rev["new"] + rev["accelerated"],
         "deals": rev["deals"],
         "roi": value,
+        "status": calc.roi_status(value),
         "verdict": verdict,
         "tone": tone,
     }
@@ -193,13 +212,20 @@ def event_cards(today=None):
         targets = query("SELECT COUNT(*) AS n FROM targets WHERE event_id = ?", (e["id"],), one=True)["n"]
         meetings = query("SELECT COUNT(*) AS n FROM targets WHERE event_id = ? AND status IN ('meeting', 'met')",
                          (e["id"],), one=True)["n"]
+        score = score_summary(e["id"])
+        status = event_status(e, today)
+        roi = roi_summary(e["id"])
         cards.append({
             "event": e,
             "phase": event_phase(e, today),
+            "status": status,
+            "recommendation": (score["verdict"]["code"] if score["verdict"] else "none"),
+            # Окупність має сенс лише для подій, що вже відбулися
+            "roi_status": roi["status"] if status != "planned" else None,
             "leads": leads,
             "targets": targets,
             "meetings": meetings,
-            "roi": roi_summary(e["id"]),
-            "score": score_summary(e["id"]),
+            "roi": roi,
+            "score": score,
         })
     return cards

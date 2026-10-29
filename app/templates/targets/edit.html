@@ -32,7 +32,7 @@
         <div class="col-12"><hr class="my-1"><div class="fw-semibold"><i class="bi bi-star-fill text-warning"></i> Зустріч на події</div></div>
         <div class="col-12 col-md-6"><label class="form-label">Дата і час</label><input class="form-control" type="datetime-local" name="meeting_at" value="{{ target.meeting_at or '' }}" min="{{ event.start_date }}T07:00" max="{{ event.end_date }}T22:00"></div>
         <div class="col-12 col-md-6"><label class="form-label">Місце</label><input class="form-control" name="meeting_place" value="{{ target.meeting_place or '' }}" placeholder="Наприклад, стенд B12 або кав'ярня біля зали 2"></div>
-        <div class="col-12"><label class="form-label">Нотатка</label><textarea class="form-control" name="note" rows="3">{{ target.note or '' }}</textarea></div>
+        <div class="col-12"><label class="form-label">Мета контакту</label><textarea class="form-control" name="note" rows="3" placeholder="Що хочемо обговорити з цією людиною і чому вона нам цікава">{{ target.note or '' }}</textarea></div>
       </div>
       <div class="d-flex flex-wrap gap-2 mt-3">
         <button class="btn btn-primary">Зберегти</button>

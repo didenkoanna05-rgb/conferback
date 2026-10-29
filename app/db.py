@@ -42,6 +42,7 @@ def init_db():
     db = get_db()
     with current_app.open_resource("schema.sql") as f:
         db.executescript(f.read().decode("utf-8"))
+    migrate(db)
     for name in refs.DEFAULT_COST_CATEGORIES:
         db.execute("INSERT OR IGNORE INTO cost_categories (name) VALUES (?)", (name,))
     for i, (name, hint) in enumerate(refs.DEFAULT_CRITERIA):
@@ -49,6 +50,22 @@ def init_db():
             "INSERT OR IGNORE INTO criteria (name, hint, sort_order) VALUES (?, ?, ?)",
             (name, hint, i),
         )
+    db.commit()
+
+
+# Стовпці, додані після першого розгортання: (таблиця, стовпець, визначення)
+MIGRATIONS = [
+    ("events", "address", "TEXT"),
+    ("leads", "source", "TEXT"),
+]
+
+
+def migrate(db):
+    """Додає нові стовпці в уже наявну базу, не чіпаючи даних."""
+    for table, column, ddl in MIGRATIONS:
+        columns = {r[1] for r in db.execute(f"PRAGMA table_info({table})")}
+        if column not in columns:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {column} {ddl}")
     db.commit()
 
 

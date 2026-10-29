@@ -6,6 +6,13 @@
     });
   }
 
+  // Підказки до показників
+  if (window.bootstrap) {
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+      new bootstrap.Tooltip(el, {container: 'body'});
+    });
+  }
+
   // Індикатор стану мережі
   var bar = document.getElementById('netStatus');
   function showNet() {
@@ -34,9 +41,9 @@
       total.textContent = s;
       var text = 'оцініть усі критерії', tone = 'secondary';
       if (checked.length === n) {
-        if (s >= high) { text = 'участь рекомендовано'; tone = 'success'; }
-        else if (s >= low) { text = 'окремий розгляд'; tone = 'warning'; }
-        else { text = 'участь не рекомендовано'; tone = 'danger'; }
+        if (s >= high) { text = 'Участь рекомендована'; tone = 'success'; }
+        else if (s >= low) { text = 'Потрібне обговорення'; tone = 'warning'; }
+        else { text = 'Участь не рекомендована'; tone = 'danger'; }
       }
       verdict.textContent = text;
       verdict.className = 'badge text-bg-' + tone;

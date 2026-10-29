@@ -5,41 +5,79 @@
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
   <div>
     <h1 class="h3 mb-0">Події</h1>
-    <div class="text-body-secondary small">Кампанії участі в конференціях і виставках</div>
+    <div class="text-body-secondary small">Конференції та виставки, у яких компанія бере участь</div>
   </div>
   <div class="d-flex gap-2">
     {% if can('lead_capture') %}
     <a class="btn btn-accent btn-lg-md" href="{{ url_for('events.capture_choose') }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a>
     {% endif %}
     {% if can('event_edit') %}
-    <a class="btn btn-primary" href="{{ url_for('events.new') }}"><i class="bi bi-plus-lg"></i> Нова подія</a>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newEvent"><i class="bi bi-plus-lg"></i> Додати подію</button>
     {% endif %}
   </div>
 </div>
 
+{% if total %}
+<form method="get" class="filters card card-body mb-3" id="eventFilters">
+  <div class="filter-label">Статус події</div>
+  <div class="status-chips mb-2">
+    {% set args = dict(rec=filters.rec, roi=filters.roi) %}
+    <a class="chip {{ 'active' if not filters.status }}" href="{{ url_for('events.index', **args) }}">Усі <b>{{ total }}</b></a>
+    {% for k, (label, tone, hint) in refs.EVENT_STATUSES.items() %}
+    <a class="chip {{ 'active' if filters.status == k }}" title="{{ hint }}" href="{{ url_for('events.index', status=k, **args) }}"><span class="dot dot-{{ tone }}"></span>{{ label }} <b>{{ counts.status[k] }}</b></a>
+    {% endfor %}
+  </div>
+  {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
+  <div class="row g-2 align-items-end">
+    <div class="col-12 col-md-5">
+      <label class="filter-label" for="fRec">Рекомендація щодо участі <span class="text-body-tertiary fw-normal">(для запланованих)</span> {{ m.help('score') }}</label>
+      <select class="form-select" id="fRec" name="rec" onchange="this.form.submit()">
+        <option value="">Будь-яка</option>
+        {% for k, (label, tone) in refs.RECOMMENDATIONS.items() %}<option value="{{ k }}" {{ 'selected' if filters.rec == k }}>{{ label }} ({{ counts.rec[k] }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-5">
+      <label class="filter-label" for="fRoi">Окупність <span class="text-body-tertiary fw-normal">(для тих, що відбулися)</span> {{ m.help('roi') }}</label>
+      <select class="form-select" id="fRoi" name="roi" onchange="this.form.submit()">
+        <option value="">Будь-яка</option>
+        {% for k, (label, tone, hint) in refs.ROI_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if filters.roi == k }}>{{ label }} — {{ hint.split(':')[0] }} ({{ counts.roi[k] }})</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-12 col-md-2">
+      {% if filters.status or filters.rec or filters.roi %}<a class="btn btn-outline-secondary w-100" href="{{ url_for('events.index') }}"><i class="bi bi-x-lg"></i> Скинути</a>{% endif %}
+    </div>
+  </div>
+</form>
+{% endif %}
+
 {% if not cards %}
 <div class="empty card card-body text-center py-5">
   <i class="bi bi-calendar-plus display-5 text-body-tertiary"></i>
-  <p class="mt-3 mb-0">Подій ще немає.{% if can('event_edit') %} Створіть першу кампанію кнопкою «Нова подія».{% endif %}</p>
+  {% if total %}
+  <p class="mt-3 mb-0">Немає подій, що відповідають фільтрам. <a href="{{ url_for('events.index') }}">Показати всі</a></p>
+  {% else %}
+  <p class="mt-3 mb-0">Подій ще немає.{% if can('event_edit') %} Створіть першу кнопкою «Додати подію».{% endif %}</p>
+  {% endif %}
 </div>
 {% endif %}
 
 <div class="row g-3">
   {% for c in cards %}
   {% set e = c.event %}
+  {% set st = refs.EVENT_STATUSES[c.status] %}
   <div class="col-12 col-md-6 col-xl-4">
     <a class="card event-card h-100 text-decoration-none" href="{{ url_for('events.detail', event_id=e.id) }}">
       <div class="card-body">
         <div class="d-flex justify-content-between align-items-start gap-2">
           <h2 class="h5 card-title mb-1">{{ e.name }}</h2>
-          {{ m.badge(refs.PHASES[c.phase]) }}
+          <span class="badge text-bg-{{ st[1] }}" title="{{ st[2] }}">{{ st[0] }}</span>
         </div>
         <div class="small text-body-secondary mb-3">
           <i class="bi bi-geo-alt"></i> {{ e.city or '—' }} · {{ e.start_date|d }}–{{ e.end_date|d }} · {{ 'зі стендом' if e.has_booth else 'без стенда' }}
         </div>
         <div class="mini-stats">
           <div><span>Витрати</span><b>{{ c.roi.cost|money(e.currency) }}</b></div>
-          {% if c.phase == 'planned' %}
+          {% if c.status == 'planned' %}
           <div><span>Контакти</span><b>{{ c.targets }}</b></div>
           <div><span>Зустрічей</span><b>{{ c.meetings }}</b></div>
           {% else %}
@@ -49,21 +87,122 @@
         </div>
       </div>
       <div class="card-footer bg-transparent d-flex align-items-center justify-content-between gap-2">
-        {% if c.phase == 'planned' %}
-          {% if c.score.verdict %}
-          <span class="small"><i class="bi bi-clipboard-check"></i> {{ m.badge((c.score.verdict.text, c.score.verdict.tone)) }}</span>
-          {% else %}
-          <span class="small text-body-secondary"><i class="bi bi-clipboard"></i> оцінку ще не завершено</span>
-          {% endif %}
+        {% if c.status == 'planned' %}
+          {% set rec = refs.RECOMMENDATIONS[c.recommendation] %}
+          <span class="small text-body-secondary">Оцінка {{ c.score.total }} з {{ c.score.max }}</span>
+          <span class="badge text-bg-{{ rec[1] }}">{{ rec[0] }}</span>
         {% else %}
-          <span class="small">
-            ROI <b class="fs-6">{{ c.roi.roi|num }}</b>
-          </span>
-          <span class="badge text-bg-{{ c.roi.tone }} text-wrap text-start">{{ c.roi.verdict }}</span>
+          {% set rs = refs.ROI_STATUSES[c.roi_status] %}
+          <span class="small">ROI <b class="fs-6">{{ c.roi.roi|num }}</b></span>
+          <span class="badge text-bg-{{ rs[1] }} text-wrap text-start" title="{{ rs[2] }}">{{ rs[0] }}</span>
         {% endif %}
       </div>
     </a>
   </div>
   {% endfor %}
 </div>
+
+{% if can('event_edit') %}
+<div class="modal fade" id="newEvent" tabindex="-1" aria-labelledby="newEventTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable modal-fullscreen-sm-down">
+    <form method="post" action="{{ url_for('events.new') }}" class="modal-content">
+      {{ m.csrf() }}
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="newEventTitle">Нова подія</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрити"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12">
+            <label class="form-label" for="ne_name">Назва події *</label>
+            <input class="form-control" id="ne_name" name="name" required maxlength="200" placeholder="Наприклад, Web Summit Lisbon 2026">
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="ne_city">Місто</label>
+            <input class="form-control" id="ne_city" name="city" maxlength="100" placeholder="Лісабон">
+          </div>
+          <div class="col-12 col-md-8">
+            <label class="form-label" for="ne_address">Адреса</label>
+            <input class="form-control" id="ne_address" name="address" maxlength="300" placeholder="Назва виставкового центру, вулиця">
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="ne_start">Початок *</label>
+            <input class="form-control" type="date" id="ne_start" name="start_date" required>
+          </div>
+          <div class="col-6">
+            <label class="form-label" for="ne_end">Кінець *</label>
+            <input class="form-control" type="date" id="ne_end" name="end_date" required>
+          </div>
+          <div class="col-12 col-md-8">
+            <span class="form-label d-block">Формат участі</span>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="has_booth" id="ne_b1" value="1" checked>
+              <label class="btn btn-outline-primary" for="ne_b1"><i class="bi bi-shop"></i> Зі стендом</label>
+              <input type="radio" class="btn-check" name="has_booth" id="ne_b0" value="0">
+              <label class="btn btn-outline-primary" for="ne_b0"><i class="bi bi-person-walking"></i> Без стенда</label>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <label class="form-label" for="ne_currency">Валюта</label>
+            <select class="form-select" id="ne_currency" name="currency">
+              {% for code, sign in refs.CURRENCIES.items() %}<option value="{{ code }}">{{ code }} ({{ sign }})</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="ne_goal">Мета участі</label>
+            <textarea class="form-control" id="ne_goal" name="goal" rows="2" placeholder="Що компанія хоче отримати від цієї поїздки"></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mt-4 mb-2">
+          <h3 class="h6 mb-0"><i class="bi bi-wallet2"></i> Заплановані витрати</h3>
+          <span class="small text-body-secondary">Разом: <b id="ne_total">0</b></span>
+        </div>
+        <div id="ne_costs" class="d-grid gap-2">
+          {% for cat in categories[:3] %}
+          <div class="row g-2 cost-line">
+            <div class="col-12 col-md-4"><select class="form-select" name="cost_category" aria-label="Категорія">{% for c2 in categories %}<option value="{{ c2.id }}" {{ 'selected' if c2.id == cat.id }}>{{ c2.name }}</option>{% endfor %}</select></div>
+            <div class="col-7 col-md-5"><input class="form-control" name="cost_description" placeholder="Опис (необов'язково)" aria-label="Опис"></div>
+            <div class="col-5 col-md-3"><input class="form-control text-end" name="cost_planned" inputmode="decimal" placeholder="Сума" aria-label="Сума"></div>
+          </div>
+          {% endfor %}
+        </div>
+        <button type="button" class="btn btn-sm btn-link px-0 mt-1" id="ne_addCost"><i class="bi bi-plus-lg"></i> Ще рядок</button>
+        <div class="form-text">Це планові суми. Фактичні витрати можна внести пізніше у вкладці «Витрати». Порожні рядки не зберігаються.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Скасувати</button>
+        <button class="btn btn-primary">Створити подію</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var box = document.getElementById('ne_costs');
+  if (!box) return;
+  var total = document.getElementById('ne_total');
+  function sum() {
+    var s = 0;
+    box.querySelectorAll('[name=cost_planned]').forEach(function (i) {
+      var v = parseFloat((i.value || '').replace(/\s/g, '').replace(',', '.'));
+      if (!isNaN(v)) s += v;
+    });
+    total.textContent = s.toLocaleString('uk-UA');
+  }
+  box.addEventListener('input', sum);
+  document.getElementById('ne_addCost').addEventListener('click', function () {
+    var line = box.querySelector('.cost-line').cloneNode(true);
+    line.querySelectorAll('input').forEach(function (i) { i.value = ''; });
+    box.appendChild(line);
+    line.querySelector('select').focus();
+  });
+  // Кінець події за замовчуванням дорівнює початку
+  var start = document.getElementById('ne_start'), end = document.getElementById('ne_end');
+  start.addEventListener('change', function () { if (!end.value || end.value < start.value) end.value = start.value; });
+})();
+</script>
 {% endblock %}

@@ -39,6 +39,7 @@
         {% if can('lead_capture') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint in ('events.capture_choose', 'leads.capture') %}active{% endif %}" href="{{ url_for('events.capture_choose') }}"><i class="bi bi-chat-square-text"></i> Записати розмову</a></li>
         {% endif %}
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == 'events.formulas' %}active{% endif %}" href="{{ url_for('events.formulas') }}"><i class="bi bi-question-circle"></i> Як рахуємо</a></li>
         {% if can('settings') %}
         <li class="nav-item"><a class="nav-link {% if request.endpoint == 'settings.index' %}active{% endif %}" href="{{ url_for('settings.index') }}"><i class="bi bi-sliders"></i> Довідники</a></li>
         {% endif %}

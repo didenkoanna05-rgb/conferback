@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS events (
     id          INTEGER PRIMARY KEY,
     name        TEXT    NOT NULL,
     city        TEXT,
+    address     TEXT,
     start_date  DATE    NOT NULL,
     end_date    DATE    NOT NULL,
     goal        TEXT,
@@ -99,6 +100,8 @@ CREATE TABLE IF NOT EXISTS leads (
     channel     TEXT    CHECK (channel IS NULL OR channel IN ('linkedin', 'email', 'event_app', 'messenger', 'phone', 'in_person')),
     -- 0: з людиною не зустрілися, але її взяли в роботу після події з цільового списку
     met         INTEGER NOT NULL DEFAULT 1,
+    -- Звідки лід, якщо його імпортували або внесли вручну (NULL — записано під час розмови)
+    source      TEXT,
     icp_fit     INTEGER CHECK (icp_fit IS NULL OR icp_fit BETWEEN 1 AND 3),
     intent      INTEGER CHECK (intent IS NULL OR intent BETWEEN 1 AND 3),
     need_topic  TEXT,

@@ -34,6 +34,9 @@
 <div class="card queue-group queue-{{ key }}">
   <ul class="list-group list-group-flush">
   {% for l in items %}
+    {% if key == 'upcoming' and loop.changed(l.due_date) %}
+    <li class="list-group-item queue-day"><i class="bi bi-calendar3"></i> {{ l.due_date|d }} · {{ ['понеділок', 'вівторок', 'середа', 'четвер', 'пʼятниця', 'субота', 'неділя'][date_of(l.due_date).weekday()] }}</li>
+    {% endif %}
     <li class="list-group-item">
       <div class="d-flex flex-wrap justify-content-between gap-2">
         <div class="min-w-0 flex-grow-1">
