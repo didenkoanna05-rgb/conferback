@@ -4,7 +4,7 @@ import os
 import secrets
 from datetime import date, datetime, timedelta
 
-from flask import Flask, g, render_template, send_from_directory
+from flask import Flask, g, render_template, send_from_directory, url_for
 
 from . import auth, calc, db, formulas, refs, stats
 
@@ -126,6 +126,14 @@ def _register_helpers(app):
             return "—"
         return f"{value * 100:.0f} %"
 
+    def asset(filename):
+        """Посилання на власний файл з позначкою версії, щоб браузер не показував стару копію."""
+        try:
+            version = int(os.path.getmtime(os.path.join(app.static_folder, filename)))
+        except OSError:
+            version = 0
+        return url_for("static", filename=filename, v=version)
+
     @app.context_processor
     def inject():
         return {
@@ -138,4 +146,5 @@ def _register_helpers(app):
             "event_status": stats.event_status,
             "formulas": formulas.FORMULAS,
             "date_of": lambda s: date.fromisoformat(str(s)[:10]),
+            "asset": asset,
         }

@@ -88,7 +88,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ asset('js/charts.js') }}"></script>
 <script>
   CB.bars('costBars', {{ by_category|map(attribute='name')|list|tojson }}, [
     {label: 'План', data: {{ by_category|map(attribute='planned')|list|tojson }}, color: CB.c.muted},

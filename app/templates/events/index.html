@@ -14,35 +14,33 @@
 {% endcall %}
 
 {% if total %}
-<form method="get" class="filters card card-body mb-3" id="eventFilters">
-  <div class="filter-label">Статус події</div>
-  <div class="status-chips mb-2">
-    {% set args = dict(rec=filters.rec, roi=filters.roi) %}
-    <a class="chip {{ 'active' if not filters.status }}" href="{{ url_for('events.index', **args) }}">Усі <b>{{ total }}</b></a>
-    {% for k, (label, tone, hint) in refs.EVENT_STATUSES.items() %}
-    <a class="chip {{ 'active' if filters.status == k }}" title="{{ hint }}" href="{{ url_for('events.index', status=k, **args) }}"><span class="dot dot-{{ tone }}"></span>{{ label }} <b>{{ counts.status[k] }}</b></a>
-    {% endfor %}
-  </div>
+<form method="get" class="filter-bar mb-3" id="eventFilters">
   {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status }}">{% endif %}
-  <div class="row g-2 align-items-end">
-    <div class="col-12 col-md-5">
-      <label class="filter-label" for="fRec">Рекомендація щодо участі <span class="text-body-tertiary fw-normal">(для запланованих)</span> {{ m.help('score') }}</label>
-      <select class="form-select" id="fRec" name="rec" onchange="this.form.submit()">
-        <option value="">Будь-яка</option>
-        {% for k, (label, tone) in refs.RECOMMENDATIONS.items() %}<option value="{{ k }}" {{ 'selected' if filters.rec == k }}>{{ label }} ({{ counts.rec[k] }})</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-md-5">
-      <label class="filter-label" for="fRoi">Окупність <span class="text-body-tertiary fw-normal">(для тих, що відбулися)</span> {{ m.help('roi') }}</label>
-      <select class="form-select" id="fRoi" name="roi" onchange="this.form.submit()">
-        <option value="">Будь-яка</option>
-        {% for k, (label, tone, hint) in refs.ROI_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if filters.roi == k }}>{{ label }} — {{ hint.split(':')[0] }} ({{ counts.roi[k] }})</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-12 col-md-2">
-      {% if filters.status or filters.rec or filters.roi %}<a class="btn btn-outline-secondary w-100" href="{{ url_for('events.index') }}"><i class="bi bi-x-lg"></i> Скинути</a>{% endif %}
+  <div class="filter-group">
+    <span class="filter-label">Статус</span>
+    <div class="status-chips">
+      {% set args = dict(rec=filters.rec, roi=filters.roi) %}
+      <a class="chip {{ 'active' if not filters.status }}" href="{{ url_for('events.index', **args) }}">Усі <b>{{ total }}</b></a>
+      {% for k, (label, tone, hint) in refs.EVENT_STATUSES.items() %}
+      <a class="chip {{ 'active' if filters.status == k }}" title="{{ hint }}" href="{{ url_for('events.index', status=k, **args) }}"><span class="dot dot-{{ tone }}"></span>{{ label }} <b>{{ counts.status[k] }}</b></a>
+      {% endfor %}
     </div>
   </div>
+  <div class="filter-group filter-select">
+    <label class="filter-label" for="fRec">Рекомендація {{ m.help('score') }}</label>
+    <select class="form-select form-select-sm" id="fRec" name="rec" onchange="this.form.submit()" title="Для запланованих подій">
+      <option value="">Будь-яка</option>
+      {% for k, (label, tone) in refs.RECOMMENDATIONS.items() %}<option value="{{ k }}" {{ 'selected' if filters.rec == k }}>{{ label }} ({{ counts.rec[k] }})</option>{% endfor %}
+    </select>
+  </div>
+  <div class="filter-group filter-select">
+    <label class="filter-label" for="fRoi">Окупність {{ m.help('roi') }}</label>
+    <select class="form-select form-select-sm" id="fRoi" name="roi" onchange="this.form.submit()" title="Для подій, що вже відбулися">
+      <option value="">Будь-яка</option>
+      {% for k, (label, tone, hint) in refs.ROI_STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if filters.roi == k }}>{{ label }} ({{ counts.roi[k] }})</option>{% endfor %}
+    </select>
+  </div>
+  {% if filters.status or filters.rec or filters.roi %}<a class="btn btn-sm btn-outline-secondary filter-reset" href="{{ url_for('events.index') }}"><i class="bi bi-x-lg"></i> Скинути</a>{% endif %}
 </form>
 {% endif %}
 

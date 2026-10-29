@@ -1,6 +1,6 @@
 // Службовий сценарій: дозволяє відкрити форму запису розмови без мережі,
 // якщо її вже відкривали на цьому пристрої.
-const CACHE = 'conferback-v1';
+const CACHE = 'conferback-v2';
 const STATIC = [
   '/static/vendor/bootstrap.min.css',
   '/static/vendor/bootstrap-icons.css',
@@ -28,13 +28,24 @@ self.addEventListener('fetch', (e) => {
   const url = new URL(req.url);
   if (req.method !== 'GET' || url.origin !== location.origin) return;
 
-  if (url.pathname.startsWith('/static/')) {
-    // Статичні файли: спершу з пам'яті
+  if (url.pathname.startsWith('/static/vendor/')) {
+    // Бібліотеки не змінюються: спершу з пам'яті
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
       const copy = res.clone();
       caches.open(CACHE).then((c) => c.put(req, copy));
       return res;
     })));
+    return;
+  }
+
+  if (url.pathname.startsWith('/static/')) {
+    // Власні стилі й сценарії: спершу мережа, щоб оновлення сайту було видно одразу;
+    // копія з пам'яті — лише коли зв'язку немає
+    e.respondWith(fetch(req).then((res) => {
+      const copy = res.clone();
+      caches.open(CACHE).then((c) => c.put(url.pathname, copy));
+      return res;
+    }).catch(() => caches.match(url.pathname)));
     return;
   }
 

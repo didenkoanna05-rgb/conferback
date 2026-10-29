@@ -172,7 +172,7 @@ a.channel:hover { text-decoration: underline; }
 .chart-sm { height: 230px; }
 .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .75rem; }
 .kpi { display: flex; gap: .75rem; align-items: center; background: #fff; border: 1px solid #e3e8ef; border-radius: .9rem; padding: .9rem 1rem; }
-.kpi > i { font-size: 1.35rem; width: 2.6rem; height: 2.6rem; border-radius: .75rem; display: grid; place-items: center; background: #eef3fa; color: var(--bs-primary); flex-shrink: 0; }
+.kpi > i { font-size: 1.35rem; width: 2.9rem; height: 2.9rem; border-radius: .85rem; display: grid; place-items: center; background: #eef3fa; color: var(--bs-primary); flex-shrink: 0; }
 .kpi-v { font-size: 1.35rem; font-weight: 700; line-height: 1.15; white-space: nowrap; }
 .kpi-v small { font-size: .8rem; font-weight: 500; color: var(--bs-secondary-color); }
 .kpi-l { font-size: .78rem; color: var(--bs-secondary-color); line-height: 1.25; }
@@ -269,3 +269,21 @@ a.channel:hover { text-decoration: underline; }
 }
 .formula-hint { background: #f2f5fa; border-left: 3px solid var(--bs-primary); border-radius: .4rem; padding: .6rem .8rem; }
 .forecast-box summary { cursor: pointer; }
+
+/* Панель фільтрів подій: усе в один рядок на виділеному фоні */
+.filter-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1.25rem;
+  background: #e4ebf5; border: 1px solid #d5dfec; border-radius: .85rem; padding: .6rem 1rem;
+}
+.filter-group { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.filter-bar .filter-label { margin: 0; white-space: nowrap; color: var(--cb-navy); }
+.filter-bar .status-chips { display: flex; flex-wrap: wrap; gap: .35rem; margin: 0; }
+.filter-bar .chip { padding: .2rem .6rem; }
+.filter-select .form-select { width: auto; min-width: 12rem; }
+.filter-reset { margin-left: auto; }
+@media (max-width: 767.98px) {
+  .filter-bar { padding: .7rem .8rem; }
+  .filter-group { width: 100%; flex-wrap: wrap; }
+  .filter-select .form-select { flex: 1 1 auto; min-width: 0; }
+  .filter-reset { margin-left: 0; }
+}

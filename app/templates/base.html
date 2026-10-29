@@ -10,7 +10,7 @@
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icon-192.png') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap-icons.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/app.css') }}">
 </head>
 <body class="{% block body_class %}{% endblock %}">
 {% if current_user %}
@@ -85,7 +85,7 @@
 {% endif %}
 
 <script src="{{ url_for('static', filename='vendor/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script src="{{ asset('js/app.js') }}"></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

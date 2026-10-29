@@ -48,7 +48,7 @@
 {% endblock %}
 {% block scripts %}
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ asset('js/charts.js') }}"></script>
 <script>
   {% set fin = finished|reverse|list %}
   var names = {{ fin|map(attribute='event')|map(attribute='name')|list|tojson }};

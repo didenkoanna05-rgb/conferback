@@ -72,7 +72,7 @@
 {% endblock %}
 {% block scripts %}{% set r = dash.roi %}{% set cur = event.currency %}
 <script src="{{ url_for('static', filename='vendor/chart.umd.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ asset('js/charts.js') }}"></script>
 <script>
   CB.bars('funnel', ['У списку', 'Написали', 'Відповіли', 'Зустріч домовлено', 'Зустрілися'],
     [{label: 'Контакти', data: [{{ dash.targets_total }}, {{ dash.contacted }}, {{ dash.responded }}, {{ dash.meetings_set }}, {{ dash.meetings_held }}], color: [CB.c.muted, CB.c.sky, CB.c.blue, CB.c.amber, CB.c.green]}],
