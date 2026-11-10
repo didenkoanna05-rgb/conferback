@@ -11,6 +11,10 @@
 Python 3.10+, Flask, SQLite (стандартний модуль `sqlite3`), Bootstrap 5 (файли лежать у проєкті).
 
 ## Запуск на своєму комп'ютері
+Найпростіше: Windows — подвійне клацання по `start_windows.bat`; Linux або macOS — `bash start.sh`.
+Скрипт сам створить середовище, встановить бібліотеки, заповнить демонстраційну базу й запустить сайт.
+
+Те саме вручну:
 ```bash
 pip install -r requirements.txt
 python seed_demo.py --yes        # база з демонстраційними даними
